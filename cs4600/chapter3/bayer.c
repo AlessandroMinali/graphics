@@ -6,13 +6,14 @@
 
 int main(int argc, char* argv[]) {
   if (argc == 1) { printf("Please specify ppm image.\n"); return 1; };
+  FILE* f = fopen(argv[1], "r");
+  if (f == 0) { printf("Failed to open file.\n"); return 1; };
 
   size_t bufsz = 64;
   char buf[bufsz];
   int width  = 0;
   int height = 0;
 
-  FILE* f = fopen(argv[1], "r");
   fgets(buf, bufsz, f); // magic number
   fgets(buf, bufsz, f); // width height
   for(size_t i = 0; i < bufsz; ++i) {
@@ -31,11 +32,9 @@ int main(int argc, char* argv[]) {
   unsigned char* green = calloc(height * width, sizeof(unsigned char));
   unsigned char* blue  = calloc(height * width, sizeof(unsigned char));
   unsigned char pixel[3] = {0};
-  unsigned char offset;
-  unsigned char color; // red: 0, green: 1, blue: 2
+  unsigned char offset = 0;
+  unsigned char color = 1; // red: 0, green: 1, blue: 2
   for(int j = 0; j < height; ++j) {
-    color = !((j + 1) % 2 == 0); // odd lines color toggle
-    offset = 0;
     for(int i = 0; i < width; ++i) {
       fread(&pixel, sizeof(char), 3, f);
       switch(color + offset) {
@@ -44,16 +43,18 @@ int main(int argc, char* argv[]) {
           break;
         }
         case(1): {
-          green[i + j * width + 1] = pixel[1];
+          green[i + j * width] = pixel[1];
           break;
         }
         case(2): {
-          blue[i + j * width + 2] = pixel[2];
+          blue[i + j * width] = pixel[2];
           break;
         }
       }
-      offset ^= 0x1;
+      offset = !offset;
     }
+    color = !color;
+    offset = 0;
   }
   fclose(f);
 
@@ -73,12 +74,12 @@ int main(int argc, char* argv[]) {
   fclose(fb);
 
   // recombine channels
-  FILE* finale = fopen("mosaic.ppm", "wb");
+  FILE* mosaic = fopen("mosaic.ppm", "wb");
   sprintf(header, "P6\n%u %u\n%u\n", width, height, max);
-  fwrite (&header, strlen(header), 1, finale);
+  fwrite (&header, strlen(header), 1, mosaic);
+  offset = 0;
+  color = 1;
   for(int j = 0; j < height; ++j) {
-    color = !((j + 1) % 2 == 0);
-    offset = 0;
     for(int i = 0; i < width; ++i) {
       pixel[0] = 0; pixel[1] = 0; pixel[2] = 0;
       switch(color + offset) {
@@ -87,17 +88,19 @@ int main(int argc, char* argv[]) {
           break;
         }
         case(1): {
-          pixel[1] = green[i + j * width + 1];
+          pixel[1] = green[i + j * width];
           break;
         }
         case(2): {
-          pixel[2] = blue[i + j * width + 2];
+          pixel[2] = blue[i + j * width];
           break;
         }
       }
-      fwrite(&pixel, sizeof(char), 3, finale);
-      offset ^= 0x1;
+      fwrite(&pixel, sizeof(char), 3, mosaic);
+      offset = !offset;
     }
+    color = !color;
+    offset = 0;
   }
 
   return 0;
