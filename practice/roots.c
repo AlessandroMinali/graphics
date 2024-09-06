@@ -1,3 +1,6 @@
+// exploration in different derivation for solving roots which avoids
+// floating point issues when a, c are small leading to two nubers
+// close to reach being subtracted
 #include <math.h>
 #include <stdio.h>
 

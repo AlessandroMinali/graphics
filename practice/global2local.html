@@ -1,3 +1,4 @@
+<!-- making sure I understand coordinate transformation -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,7 +8,7 @@
 </head>
 <body>
 <canvas id="canvas" style="border: 1px solid black;" width="600" height="600"></canvas>
-<script type="text/javascript" src="coords.js"></script>
+<script type="text/javascript" src="global2local.js"></script>
 <script type="text/javascript">
 // TODO: rewatch 
   // https://cal1.iv.ggtyler.dev/watch?v=fjOdtSu4Lm4&list=PLImQaTpSAdsArRFFj8bIfqMk2X7Vlf3XF&index=0
@@ -31,19 +32,6 @@ function line(ax, ay, bx, by, width=1, color='black') {
 function text(t, s, ax, ay) {
   ctx.font = `${s}px Arial`;
   ctx.fillText(t, ax, ay);
-}
-function vsub(a, b) {
-  return {x: a.x - b.x, y: a.y - b.y};
-}
-function vdot(a, b) {
-  return (a.x * b.x) + (a.y * b.y);
-}
-function vmag(a) {
-  return Math.sqrt(a.x * a.x + a.y * a.y);
-}
-function vnorm(a) {
-  const mag = vmag(a);
-  return {x: a.x / mag, y: a.y / mag};
 }
 
 const l = -canvas.width / 2;
