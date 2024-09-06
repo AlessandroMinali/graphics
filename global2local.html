@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+<body>
+<canvas id="canvas" style="border: 1px solid black;" width="600" height="600"></canvas>
+<script type="text/javascript" src="coords.js"></script>
+<script type="text/javascript">
+// TODO: rewatch 
+  // https://cal1.iv.ggtyler.dev/watch?v=fjOdtSu4Lm4&list=PLImQaTpSAdsArRFFj8bIfqMk2X7Vlf3XF&index=0
+  // https://cal1.iv.ggtyler.dev/watch?v=0bUJyuwXV0Y&list=PLImQaTpSAdsArRFFj8bIfqMk2X7Vlf3XF&index=1
+// TODO: convert to TS
+"use strict";
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d", { alpha: false });
+let localFrame;
+
+function line(ax, ay, bx, by, width=1, color='black') {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(ax, ay);
+  ctx.lineTo(bx, by);
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'black';
+}
+function text(t, s, ax, ay) {
+  ctx.font = `${s}px Arial`;
+  ctx.fillText(t, ax, ay);
+}
+function vsub(a, b) {
+  return {x: a.x - b.x, y: a.y - b.y};
+}
+function vdot(a, b) {
+  return (a.x * b.x) + (a.y * b.y);
+}
+function vmag(a) {
+  return Math.sqrt(a.x * a.x + a.y * a.y);
+}
+function vnorm(a) {
+  const mag = vmag(a);
+  return {x: a.x / mag, y: a.y / mag};
+}
+
+const l = -canvas.width / 2;
+const r = canvas.width / 2;
+const t = -canvas.height / 2;
+const b = canvas.height / 2;
+const w = canvas.width;
+const h = canvas.height;
+const distance = 20;
+const unit = canvas.width / distance;
+
+function drawGraphLines() {
+  // clear screen
+  ctx.fillStyle = "white";
+  ctx.fillRect(l, t, w, h);
+  ctx.fillStyle = "black";
+  // x-axis
+  line(l, 0, r, 0);
+  text('x', 20, r - 15, 0);
+  for(let i = 1; l + unit * i < r; ++i) {
+    line(l + unit * i, t, l + unit * i, b, 0.1);
+    text(distance / 2 - i, 8, l + unit * i, 0);
+  }
+  // y-axis
+  line(0, t, 0, b);
+  text('y', 20, 0, t + 15);
+  for(let j = 1; t + unit * j < b; ++j) {
+    line(l, t + unit * j, r, t + unit * j, 0.1);
+    text(distance / 2 - j, 8, 0, t + unit * j);
+  }
+}
+function drawLocalFrame() {
+  const f = localFrame;
+  f.u = {x: unit * Math.cos(f.r),  y: unit * -Math.sin(f.r)}
+  f.v = {x: unit * Math.sin(f.r), y: unit * Math.cos(f.r)}
+  // x-axis
+  line(f.p.x, f.p.y, f.p.x + f.u.x, f.p.y + f.u.y, 1, 'red');
+  text('u', 10, f.p.x + f.u.x + 5, f.p.y + f.u.y + 5);
+  // y-axis
+  line(f.p.x, f.p.y, f.p.x - f.v.x, f.p.y - f.v.y, 1, 'green');
+  text('v', 10, f.p.x - f.v.x + 5, f.p.y - f.v.y + 5);
+  // angle + coord
+  text(`angle = ${f.r.toFixed(2)}rad`, 10, l, t + 10);
+  text(
+    `coord = {x: ${(f.p.x / unit).toFixed(1)}, y: ${(-f.p.y / unit).toFixed(1)}}`,
+    10,
+    l, t + 20
+  );
+}
+
+let delay = false;
+canvas.addEventListener('mousemove', (e) => {
+  if (!delay) {
+    delay = true;
+    setTimeout(function() {
+      delay = false;
+    }, 33);
+  } else {
+    return;
+  }
+
+  let x = e.offsetX - r;
+  let y = e.offsetY - b;
+  // background
+  drawGraphLines();
+  // from origin to cursor
+  line(0, 0, x, y, 0.5, 'grey');
+  text(`(${(x / unit).toFixed(1)}, ${(-y / unit).toFixed(1)})`, 10, x, y);
+
+  if (localFrame !== undefined) {
+    const globalCoord = { x: x, y: y };
+    // draw local frame
+    drawLocalFrame(globalCoord);
+
+    // TODO: implement localFromGlobal
+    const localCoord = localFromGlobal(globalCoord, localFrame?.p, localFrame?.r);
+    line(0, 0, localCoord.x, localCoord.y, 3, 'blue');
+    text(
+      `(${(localCoord.x / unit).toFixed(1)}, ${-(localCoord.y / unit).toFixed(1)})`,
+      10,
+      localCoord.x, localCoord.y
+    );
+  }
+});
+
+canvas.addEventListener('click', (e) => {
+  localFrame = {
+    r: Math.random() * Math.PI,
+    p: { x: e.offsetX - r, y: e.offsetY - b},
+  };
+})
+
+// translate (0,0) to the center of canvas
+ctx.translate(canvas.width / 2, canvas.height / 2);
+drawGraphLines();
+</script>
+</body>
+</html>
