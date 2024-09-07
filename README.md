@@ -32,6 +32,8 @@
 ◎ [CS4600 Introduction to Computer Graphics](https://graphics.cs.utah.edu/courses/cs4600/fall2024/), [lectures on YT](https://youtube.com/watch?v=vLSphLtKQ0o&list=PLplnkTzzqsZTfYh4UbhLGpI5kGd5oW_Hh): easy to understand lectures
 
 # Math
+## General
+◯ [Math for Game Devs, YT series by Freya Holmer](https://youtube.com/watch?v=fjOdtSu4Lm4&list=PLImQaTpSAdsArRFFj8bIfqMk2X7Vlf3XF&index=0): great explainer but lots of down-time in videos you'll want to skip
 ## Trigonometry
 ◯ [Trig for games](https://demoman.net/?a=trig-for-games): visual learning
 ## Vectors
