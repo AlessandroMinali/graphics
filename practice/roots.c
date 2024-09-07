@@ -1,6 +1,7 @@
 // exploration in different derivation for solving roots which avoids
 // floating point issues when a, c are small leading to two nubers
 // close to reach being subtracted
+// pg.17 of Fundamentals of Computer Graphics 4ed
 #include <math.h>
 #include <stdio.h>
 
