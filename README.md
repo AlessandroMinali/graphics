@@ -17,7 +17,7 @@
   </tr>
   <tr>
     <td>※</td>
-    <td>n/a</td>
+    <td>n/a, need to read</td>
   </tr>
 </table>
 
