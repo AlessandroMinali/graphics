@@ -30,10 +30,5 @@ function vnorm(a) {
 // { x: float, y: float }
 //
 function localFromGlobal(globalCoord, localOrigin, localAngle) {
-  let u = {x: Math.cos(localAngle), y: -Math.sin(localAngle)}
-  let v = {x: Math.sin(localAngle), y:  Math.cos(localAngle)}
-  return {
-    x: vdot(vsub(globalCoord, localOrigin), vnorm(u)),
-    y: vdot(vsub(globalCoord, localOrigin), vnorm(v))
-  };
+  return {x: 0, y: 0};
 }
