@@ -2,7 +2,6 @@
 // fgImg is the foreground image.
 // fgOpac is the opacity of the foreground image.
 // fgPos is the position of the foreground image in pixels. It can be negative and (0,0) means the top-left pixels of the foreground and background are aligned.
-flag = false;
 function composite( bgImg, fgImg, fgOpac, fgPos )
 {
   x_clip_left   = Math.abs(Math.min(0, fgPos.x));
