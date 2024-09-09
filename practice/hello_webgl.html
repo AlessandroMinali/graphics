@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+<body>
+<canvas id='canvas'></canvas>
+<script type="text/javascript">
+  // taken from cs4600, original by Cem Yuskel
+  "use strict";
+
+  const vertex = `
+    attribute vec2 pos;
+    attribute vec3 clr;
+
+    uniform mat4 trans; // all vertices recieve the SAME <uniform> value
+
+    varying vec3 vcolor; // passed to fragment stage
+
+    void main() {
+      vcolor = clr; // passed to fragment stage
+      gl_Position = trans * vec4(pos, 0, 1); // output of shader
+    }
+  `
+  const fragment = `
+    precision mediump float;
+
+    varying vec3 vcolor; // passed from vertex shader, interpolated
+
+    void main() {
+      gl_FragColor = vec4(vcolor, 1); // output of shader
+    }
+  `
+
+  window.onload = () => {
+    const gl = canvas.getContext('webgl');
+
+    const pixelRatio = window.devicePixelRatio || 1;
+    canvas.width = pixelRatio * canvas.clientWidth;
+    canvas.height = pixelRatio * canvas.clientHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    gl.clearColor(1, 1, 1, 0);
+    gl.lineWidth(1.0);
+
+    const vs = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vs, vertex);
+    gl.compileShader(vs);
+    if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
+      alert(gl.getShaderInfoLog(vs));
+      gl.deleShader(vs);
+    }
+
+    const fs = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fs, fragment);
+    gl.compileShader(fs);
+    if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
+      alert(gl.getShaderInfoLog(fs));
+      gl.deleteShader(fs);
+    }
+
+    const prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      alert(gl.getShaderInfoLog(prog));
+    }
+    gl.useProgram(prog);
+
+    const positions = [
+      -0.8,  0.4,
+       0.8,  0.4,
+       0.8, -0.4,
+      -0.8,  0.4,
+       0.8, -0.4,
+      -0.8, -0.4,
+    ];
+    let position_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer); // bind one at a time
+    gl.bufferData( // allocate + push data to GPU
+      gl.ARRAY_BUFFER,
+      new Float32Array(positions),
+      gl.STATIC_DRAW
+    );
+    const p = gl.getAttribLocation(prog, 'pos');
+    gl.vertexAttribPointer(p, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(p);
+
+    const colors = [
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1,
+      1, 0, 0,
+      0, 0, 1,
+      1, 0, 1,
+    ];
+    let color_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(colors),
+      gl.STATIC_DRAW
+    );
+    const c = gl.getAttribLocation(prog, 'clr');
+    gl.vertexAttribPointer(c, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(c);
+
+    const m = gl.getUniformLocation(prog, 'trans');
+    const matrix = [ // column-major order
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    ];
+    gl.uniformMatrix4fv(m, false, matrix);
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+</script>
+</body>
+</html>

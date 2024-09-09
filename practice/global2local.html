@@ -1,6 +1,4 @@
 <!-- making sure I understand coordinate transformation -->
-<!-- https://gamedev.stackexchange.com/questions/79765/how-do-i-convert-from-the-global-coordinate-space-to-a-local-space -->
-<!-- https://computergraphics.stackexchange.com/questions/8562/how-to-convert-from-object-space-into-world-space-exercise-from-3d-math-primer -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,7 +11,6 @@
 <canvas id="canvas" style="border: 1px solid black;" width="600" height="600"></canvas>
 <script type="text/javascript" src="global2local.js"></script>
 <script type="text/javascript">
-// TODO: convert to TS
 "use strict";
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d", { alpha: false });
@@ -102,7 +99,7 @@ canvas.addEventListener('mousemove', (e) => {
   text(`(${(x / unit).toFixed(1)}, ${(-y / unit).toFixed(1)})`, 10, x, y);
 
   if (localFrame !== undefined) {
-    const globalCoord = { x: x, y: y };
+    const globalCoord = { x, y };
     // draw local frame
     drawLocalFrame(globalCoord);
 
