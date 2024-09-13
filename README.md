@@ -37,7 +37,7 @@
 ## Trigonometry
 ◯ [Trig for games](https://demoman.net/?a=trig-for-games): visual learning
 ## Vectors
-◯ [Essence of linear algebra, YT series by 3Blue1Brown](https://iv.ggtyler.dev/watch?v=fNk_zzaMoSs&list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab&index=0): great intro to the subject w/ visual intuition
+◎ [Essence of linear algebra, YT series by 3Blue1Brown](https://iv.ggtyler.dev/watch?v=fNk_zzaMoSs&list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab&index=0): great intro to the subject w/ visual intuition
 
 ## Transformations
 ◯ [Global to local](https://gamedev.stackexchange.com/questions/79765/how-do-i-convert-from-the-global-coordinate-space-to-a-local-space): practical example  
