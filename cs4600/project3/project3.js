@@ -69,11 +69,13 @@ var curvesVS = `
   {
     // [TO-DO] Replace the following with the proper vertex shader code
     gl_Position = mvp * vec4(
-      vec2((1.-t)*(1.-t)*(1.-t)*p0 +
-      3.*(1.-t)*(1.-t)*t*p1 +
-      3.*(1.-t)*t*t*p2 +
-      t*t*t*p3
-    ), 0, 1);
+      vec2(
+        (1.-t)*(1.-t)*(1.-t)*p0 +
+        3.*(1.-t)*(1.-t)*t*p1 +
+        3.*(1.-t)*t*t*p2 +
+        t*t*t*p3
+      ),
+      0, 1);
   }
 `;
 
