@@ -94,10 +94,10 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
     float delta = b*b - 4.*a*c;
     // TO-DO: If intersection is found, update the given HitInfo
     if (delta > 0.) {
-      foundHit = true;
 
       float t = (-b - sqrt(delta))/(2.*a);
       if (t > 0. && t < hit.t) {
+        foundHit = true;
         hit.t = t;
         hit.position = ray.pos + t*ray.dir;
         hit.normal   = normalize((hit.position - spheres[i].center)/spheres[i].radius);
@@ -132,9 +132,9 @@ vec4 RayTracer( Ray ray )
       
       if ( IntersectRay( h, r ) ) {
         // TO-DO: Hit found, so shade the hit point
+        k_s = h.mtl.k_s;
         clr += k_s * Shade( h.mtl, h.position, h.normal, normalize(-r.dir) );
         // TO-DO: Update the loop variables for tracing the next reflection ray
-        k_s = h.mtl.k_s;
         ray = r;
         hit = h;
       } else {
