@@ -47,7 +47,13 @@ vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
     ray.dir = normalize(lights[i].position - position);
     if (!ShadowRay( ray )) {
       // TO-DO: If not shadowed, perform shading using the Blinn model
-      color += mtl.k_d * lights[i].intensity; // change this line
+      vec3 lightDir = normalize(lights[i].position);
+      vec3 h_v = normalize(lightDir + view);
+      color +=
+        lights[i].intensity * (
+          mtl.k_d*dot(lightDir, normal) +
+          mtl.k_s*pow(dot(h_v, normal), mtl.n)
+        ); // change this line
     }
   }
   return color;
