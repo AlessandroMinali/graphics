@@ -34,7 +34,7 @@ uniform samplerCube envMap;
 uniform int bounceLimit;
 
 bool IntersectRay( inout HitInfo hit, Ray ray );
-bool ShadowRay( Ray ray );
+bool IntersectShadowRay( Ray ray );
 
 // Shades the given point and returns the computed color.
 vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
@@ -45,21 +45,24 @@ vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
     Ray ray;
     ray.pos = position;
     ray.dir = normalize(lights[i].position - position);
-    if (!ShadowRay( ray )) {
+    if (!IntersectShadowRay( ray )) {
       // TO-DO: If not shadowed, perform shading using the Blinn model
       vec3 lightDir = normalize(lights[i].position);
       vec3 h_v = normalize(lightDir + view);
-      color +=
-        lights[i].intensity * (
-          mtl.k_d*dot(lightDir, normal) +
-          mtl.k_s*pow(dot(h_v, normal), mtl.n)
-        ); // change this line
+      float geo_term = dot(lightDir, normal);
+      if (geo_term > 0.) {
+        color +=
+          lights[i].intensity * (
+            mtl.k_d*geo_term +
+            mtl.k_s*pow(dot(h_v, normal), mtl.n)
+          ); // change this line
+      }
     }
   }
   return color;
 }
 
-bool ShadowRay( Ray ray )
+bool IntersectShadowRay( Ray ray )
 {
   for ( int i=0; i<NUM_SPHERES; ++i ) {
     float a = dot(ray.dir, ray.dir);
@@ -68,7 +71,7 @@ bool ShadowRay( Ray ray )
     float c = dot(p_c, p_c) - spheres[i].radius*spheres[i].radius;
     float delta = b*b - 4.*a*c;
 
-    float bias = 0.001;
+    float bias = 0.003;
     if (delta > 0. && (-b - sqrt(delta))/(2.*a) > bias) { return true; }
   }
   return false;
@@ -124,10 +127,16 @@ vec4 RayTracer( Ray ray )
       HitInfo h;  // reflection hit info
       
       // TO-DO: Initialize the reflection ray
+      r.dir = reflect(normalize(ray.dir), hit.normal);
+      r.pos = hit.position;
       
       if ( IntersectRay( h, r ) ) {
         // TO-DO: Hit found, so shade the hit point
+        clr += k_s * Shade( h.mtl, h.position, h.normal, normalize(-r.dir) );
         // TO-DO: Update the loop variables for tracing the next reflection ray
+        k_s = h.mtl.k_s;
+        ray = r;
+        hit = h;
       } else {
         // The refleciton ray did not intersect with anything,
         // so we are using the environment color
@@ -137,7 +146,7 @@ vec4 RayTracer( Ray ray )
     }
     return vec4( clr, 1 );  // return the accumulated color, including the reflections
   } else {
-    return vec4( textureCube( envMap, ray.dir.xzy ).rgb, 0 ); // return the environment color
+    return vec4( textureCube( envMap, ray.dir.xzy ).rgb, 1 ); // return the environment color
   }
 }
 `;
