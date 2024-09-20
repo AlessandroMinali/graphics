@@ -39,7 +39,7 @@ bool ShadowRay( Ray ray );
 // Shades the given point and returns the computed color.
 vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
 {
-  vec3 color = vec3(0,0,0);
+  vec3 color = 0.05*mtl.k_d;
   for ( int i=0; i<NUM_LIGHTS; ++i ) {
     // TO-DO: Check for shadows
     Ray ray;
