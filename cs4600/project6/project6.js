@@ -57,7 +57,23 @@ bool IntersectRay( inout HitInfo hit, Ray ray )
   bool foundHit = false;
   for ( int i=0; i<NUM_SPHERES; ++i ) {
     // TO-DO: Test for ray-sphere intersection
+    float a = dot(ray.dir, ray.dir);
+    vec3 p_c = ray.pos - spheres[i].center;
+    float b = 2.*dot(ray.dir, p_c);
+    float c = dot(p_c, p_c) - spheres[i].radius*spheres[i].radius;
+    float delta = b*b - 4.*a*c;
     // TO-DO: If intersection is found, update the given HitInfo
+    if (delta > 0.) {
+      foundHit = true;
+
+      float t = (-b - sqrt(delta))/(2.*a);
+      if (t > 0. && t < hit.t) {
+        hit.t = t;
+        hit.position = ray.pos + t*ray.dir;
+        hit.normal   = normalize((hit.position - spheres[i].center)/spheres[i].radius);
+        hit.mtl      = spheres[i].mtl;
+      }
+    }
   }
   return foundHit;
 }
