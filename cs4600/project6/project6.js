@@ -132,11 +132,11 @@ vec4 RayTracer( Ray ray )
       
       if ( IntersectRay( h, r ) ) {
         // TO-DO: Hit found, so shade the hit point
-        k_s = h.mtl.k_s;
         clr += k_s * Shade( h.mtl, h.position, h.normal, normalize(-r.dir) );
         // TO-DO: Update the loop variables for tracing the next reflection ray
         ray = r;
         hit = h;
+        k_s = h.mtl.k_s;
       } else {
         // The refleciton ray did not intersect with anything,
         // so we are using the environment color
