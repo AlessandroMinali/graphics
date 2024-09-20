@@ -34,6 +34,7 @@ uniform samplerCube envMap;
 uniform int bounceLimit;
 
 bool IntersectRay( inout HitInfo hit, Ray ray );
+bool ShadowRay( Ray ray );
 
 // Shades the given point and returns the computed color.
 vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
@@ -41,10 +42,30 @@ vec3 Shade( Material mtl, vec3 position, vec3 normal, vec3 view )
   vec3 color = vec3(0,0,0);
   for ( int i=0; i<NUM_LIGHTS; ++i ) {
     // TO-DO: Check for shadows
-    // TO-DO: If not shadowed, perform shading using the Blinn model
-    color += mtl.k_d * lights[i].intensity; // change this line
+    Ray ray;
+    ray.pos = position;
+    ray.dir = normalize(lights[i].position - position);
+    if (!ShadowRay( ray )) {
+      // TO-DO: If not shadowed, perform shading using the Blinn model
+      color += mtl.k_d * lights[i].intensity; // change this line
+    }
   }
   return color;
+}
+
+bool ShadowRay( Ray ray )
+{
+  for ( int i=0; i<NUM_SPHERES; ++i ) {
+    float a = dot(ray.dir, ray.dir);
+    vec3 p_c = ray.pos - spheres[i].center;
+    float b = 2.*dot(ray.dir, p_c);
+    float c = dot(p_c, p_c) - spheres[i].radius*spheres[i].radius;
+    float delta = b*b - 4.*a*c;
+
+    float bias = 0.001;
+    if (delta > 0. && (-b - sqrt(delta))/(2.*a) > bias) { return true; }
+  }
+  return false;
 }
 
 // Intersects the given ray with all spheres in the scene
