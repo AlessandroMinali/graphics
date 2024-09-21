@@ -232,10 +232,10 @@ const meshFS = `
     vec3 n = normalize(normal);
     vec3 l = lightDir;
 
-    vec3 K_d = showTex ? texture2D(tex, texCoord).xyz : vec3(1, 1, 1);
     vec3 shade = 0.05*vec3(0, 1, 0);
     float geo_term = dot(n, l);
     if (geo_term > 0.) {
+      vec3 K_d = showTex ? texture2D(tex, texCoord).xyz : vec3(1, 1, 1);
       shade += geo_term*K_d + vec3(0.1)*pow(dot(h_v, n), shininess);
     }
 
