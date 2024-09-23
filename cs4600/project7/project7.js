@@ -273,30 +273,18 @@ function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, pa
     // explicit euler
     // positions[i]  = positions[i].add(velocities[i].mul(dt));
     // velocities[i] = velocities[i].add(a.mul(dt));
+
+    // [TO-DO] Handle collisions
+    for(let axis of ['x', 'y', 'z']) {
+      if (positions[i][axis] < -1) {
+        positions[i][axis] -= restitution * (positions[i][axis] - -1);
+        velocities[i][axis] = -restitution * velocities[i][axis];
+      }
+      if (positions[i][axis] > 1) {
+        positions[i][axis] -= restitution * (positions[i][axis] - 1);
+        velocities[i][axis] = -restitution * velocities[i][axis];
+      }
+    }
   }
-
-  // [TO-DO] Handle collisions
-  // let collision = false;
-  // for(let i = 0; i < positions.length; ++i) {
-  //   for(let axis of ['x', 'y', 'z']) {
-  //     if (positions[i][axis] < -1) {
-  //       // positions[i][axis] = restitution * positions[i][axis] - -1;
-  //       // velocities[i][axis] = -restitution * velocities[i][axis];
-  //     }
-  //     // if (positions[i][axis] > 1) {
-  //     //   positions[i][axis] = restitution * (positions[i][axis] - 1);
-  //     //   velocities[i][axis] = -restitution * velocities[i][axis];
-  //     // }
-  //   }
-  // }
-
-  // if (collision) {
-  //   for(let i = 0; i < positions.length; ++i) {
-  //     for(let axis of ['x', 'y', 'z']) {
-  //       positions[i][axis] = positions[i][axis] - -1;
-  //       velocities[i][axis] = -restitution * velocities[i][axis];
-  //     }
-  //   }
-  // }
 }
 
