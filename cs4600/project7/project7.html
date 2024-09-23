@@ -689,9 +689,6 @@ class MassSpring {
 
 	simTimeStep()
 	{
-		// remember the position of the selected vertex, if any
-		var p = this.holdVert ? this.holdVert.copy() : undefined;
-
 		// Update positions and velocities
 		var timestep = document.getElementById('timestep').value;
 		const dt = timestep / 1000;	// time step in seconds
@@ -699,8 +696,8 @@ class MassSpring {
 		SimTimeStep( dt, this.pos, this.vel, this.springs, this.stiffness, damping, this.mass, this.gravity, this.restitution );
 		
 		// make sure that the selected vertex does not change position
-		if ( p ) {
-			this.holdVert.set(p);
+		if ( this.holdVert ) {
+      this.pos[ this.selVert ].set(this.holdVert);
 			this.vel[ this.selVert ].init(0,0,0);
 		}
 		
@@ -798,6 +795,7 @@ class MassSpring {
 			m0 = { ...m1 };
 			p.inc(d);
 			ms.updateMesh();
+      pointDrawer.setPoint( p );
 		}
 		return true;		
 	}

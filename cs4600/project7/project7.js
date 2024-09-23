@@ -249,42 +249,54 @@ const meshFS = `
 function SimTimeStep( dt, positions, velocities, springs, stiffness, damping, particleMass, gravity, restitution )
 {
 	// [TO-DO] Compute the total force of each particle
-  const forces = Array(positions.length);
-  for(let i = 0; i < positions.length; ++i) {
-    forces[i] = gravity.mul(particleMass); // f = mg
-    // for ( var j=i+1; j<positions.length; ++j ) {
-    //   const x1_x0 = positions[j].sub(positions[i]);
-    //   const l = (x1_x0).len();
-    //   const d = (x1_x0).div(l);
-    //   let f_s = d.mul(l - springs[i].rest).mul(stiffness); // k_s * (l - l_rest) * d
-    //   let f_d = d.mul(velocities[j].sub(velocities[i]).dot(d)).mul(damping); // k_d * (v1-v0).d * d
-    //   f_ss = f_s.add(f_d);
-    //   forces[i] = forces[i].add(f_ss);
-    //   forces[j] = (forces[j] ?? new Vec3(0, 0, 0)).sub(f_ss);
-    // }
+  const forces = Array(positions.length).fill(new Vec3(0, 0, 0));
+
+  for(let s = 0; s < springs.length; ++s) {
+    const i = springs[s].p0;
+    const j = springs[s].p1;
+    const x1_x0 = positions[j].sub(positions[i]);
+    const l = x1_x0.len();
+    const d = x1_x0.div(l);
+    let f_s = d.mul(l - springs[s].rest).mul(stiffness); // k_s * (l - l_rest) * d
+    let f_d = d.mul((velocities[j].sub(velocities[i])).dot(d)).mul(damping); // k_d * (v1-v0).d * d
+    f_ss = f_s.add(f_d);
+    forces[i] = forces[i].add(f_ss);
+    forces[j] = forces[j].sub(f_ss);
   }
-	// console.log(forces);
+
 	// [TO-DO] Update positions and velocities
   for(let i = 0; i < positions.length; ++i) {
-    const a = forces[i].div(particleMass); // a = f/m;
+    const a = gravity.mul(particleMass).add(forces[i]).div(particleMass); // a = f/m;
     // semi-implicit euler
     velocities[i] = velocities[i].add(a.mul(dt));
     positions[i]  = positions[i].add(velocities[i].mul(dt));
     // explicit euler
     // positions[i]  = positions[i].add(velocities[i].mul(dt));
     // velocities[i] = velocities[i].add(a.mul(dt));
-
-    // [TO-DO] Handle collisions
-    // for(let axis of ['x', 'y', 'z']) {
-    //   if (positions[i][axis] < -1) {
-    //     positions[i][axis] = restitution * (positions[i][axis] - -1);
-    //     velocities[i][axis] = -restitution * velocities[i][axis];
-    //   }
-    //   if (positions[i][axis] > 1) {
-    //     positions[i][axis] = restitution * (positions[i][axis] - 1);
-    //     velocities[i][axis] = -restitution * velocities[i][axis];
-    //   }
-    // }
   }
+
+  // [TO-DO] Handle collisions
+  // let collision = false;
+  // for(let i = 0; i < positions.length; ++i) {
+  //   for(let axis of ['x', 'y', 'z']) {
+  //     if (positions[i][axis] < -1) {
+  //       // positions[i][axis] = restitution * positions[i][axis] - -1;
+  //       // velocities[i][axis] = -restitution * velocities[i][axis];
+  //     }
+  //     // if (positions[i][axis] > 1) {
+  //     //   positions[i][axis] = restitution * (positions[i][axis] - 1);
+  //     //   velocities[i][axis] = -restitution * velocities[i][axis];
+  //     // }
+  //   }
+  // }
+
+  // if (collision) {
+  //   for(let i = 0; i < positions.length; ++i) {
+  //     for(let axis of ['x', 'y', 'z']) {
+  //       positions[i][axis] = positions[i][axis] - -1;
+  //       velocities[i][axis] = -restitution * velocities[i][axis];
+  //     }
+  //   }
+  // }
 }
 
