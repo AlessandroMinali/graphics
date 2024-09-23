@@ -212,7 +212,7 @@ const meshVS = `
 
     // half-way vector can be computed in vertex since it does not use the normal !!!
     vec4 vertCoord = mv * vec4(vrt, 1);
-    h_v = normalize(lightDir + normalize(-vertCoord.xyz));
+    h_v = normalize(lightDir - vertCoord.xyz);
   }
 `
 const meshFS = `
