@@ -28,8 +28,10 @@
 ※ The Ray Tracer Challenge, Buck  
 ※ Real-Time Rendering, 4ed Akenine-Möller+el al.: graphics bible  
 
-## Courses
-◎ [CS4600 Introduction to Computer Graphics](https://graphics.cs.utah.edu/courses/cs4600/fall2024/), [lectures on YT](https://youtube.com/watch?v=vLSphLtKQ0o&list=PLplnkTzzqsZTfYh4UbhLGpI5kGd5oW_Hh): easy to understand lectures
+# Courses
+## Utah
+◎ [CS4600 Introduction to Computer Graphics](https://graphics.cs.utah.edu/courses/cs4600/fall2024/), [lectures on YT](https://youtube.com/playlist?list=PLplnkTzzqsZTfYh4UbhLGpI5kGd5oW_Hh): easy to understand lectures and projects  
+※ [CS5610/6610 Interactive Computer Graphics](https://graphics.cs.utah.edu/courses/cs6610/spring2024/), [lectures on YT](https://youtube.com/playlist?list=PLplnkTzzqsZS3R5DjmCQsqupu43oS9CFN)
 
 # Math
 ## General
