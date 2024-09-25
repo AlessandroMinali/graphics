@@ -1,9 +1,11 @@
 // implementation from The Ray Tracer Challenge:
 // A Test-Driven Guide to Your First 3D Renderer by James Buck
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #define EPS 0.0001
+#define PPM_HEADER 127
 
 typedef union {
   struct  {
@@ -50,4 +52,29 @@ float vdot(Vec4 a, Vec4 b) {
 }
 Vec4 vcross(Vec4 a, Vec4 b) {
   return (Vec4){{a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x }};
+}
+
+Vec4 colour_mul(Vec4 a, Vec4 b) { // Hadamard product
+  return (Vec4){{ a.r * b.r, a.g * b.g, a.b * b.b }};
+}
+
+typedef struct {
+  size_t w;
+  size_t h;
+  size_t sz;
+  Vec4 *pixels;
+} Canvas;
+Canvas canvas_init(int w, int h) {
+  return (Canvas){ w, h, w*h, calloc(w * h, sizeof(Vec4)) };
+}
+void write_pixel(Canvas *canvas, int x, int y, Vec4 v) {
+  canvas->pixels[y*canvas->w+x] = v;
+}
+Vec4 pixel_at(Canvas *canvas, int x, int y) {
+  return canvas->pixels[y*canvas->w+x];
+}
+char *canvas_to_ppm(Canvas *canvas) {
+  char *buf = calloc(PPM_HEADER+1, sizeof(char));
+  snprintf(buf, PPM_HEADER, "P3\n%zu %zu\n255\n", canvas->w, canvas->h);
+  return buf;
 }

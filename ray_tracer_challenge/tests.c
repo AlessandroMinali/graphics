@@ -1,4 +1,6 @@
 #include "ray.h"
+#include <stdint.h>
+#include <string.h>
 
 void assert_f(float actual, float expected, char *msg) {
   if (fabsf(expected - actual) > EPS) { printf("FAILED %s: %0.2f got %0.2f\n", msg, expected, actual); }
@@ -13,6 +15,11 @@ void assert_v4(Vec4 actual, Vec4 expected, char *msg) {
     printf(" got ");
     print_v4(actual);
     printf("\n");
+  }
+}
+void assert_s(char *actual, char *expected, char *msg) {
+  if (strcmp(actual, expected) != 0) {
+    printf("FAILED %s:\n%s got\n%s", msg, expected, actual);
   }
 }
 
@@ -43,6 +50,23 @@ int main(int argc, char const *argv[])
 
   assert_v4(vcross(vec4(1, 2, 3, 0), vec4(2, 3, 4, 0)), vec4(-1, 2, -1, 0), "cross product vec4");
   assert_v4(vcross(vec4(2, 3, 4, 0), vec4(1, 2, 3, 0)), vec4(1, -2, 1, 0), "cross product vec4");
+
+  assert_v4(colour_mul(vec4(1, 0.2, 0.4, 0), vec4(0.9, 1, 0.1, 0)), vec4(0.9, 0.2, 0.04, 0), "colour multiply vec4");
+
+  Canvas canvas = canvas_init(10, 20);
+  Vec4 zero_v = vec4(0, 0, 0, 0);
+  for(uint8_t j = 0; j < canvas.h; ++j) {
+    for(uint8_t i = 0; i < canvas.w; ++i) {
+      if (j*canvas.w+i >= canvas.sz) { printf("overflow\n"); }
+      assert_v4(canvas.pixels[j*canvas.w+i], zero_v, "canvas is zeroed");
+    }
+  }
+  Vec4 red = vec4(1, 0, 0, 0);
+  write_pixel(&canvas, 2, 3, red);
+  assert_v4(pixel_at(&canvas, 2, 3), red, "writing pixel canvas");
+
+  Canvas c = canvas_init(5, 3);
+  assert_s(canvas_to_ppm(&c), "P3\n5 3\n255\n", "canvas to ppm");
 
   printf("Tests ran.\n");
   return 0;
