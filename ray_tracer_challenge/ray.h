@@ -2,6 +2,7 @@
 // A Test-Driven Guide to Your First 3D Renderer by James Buck
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
 
 #define EPS 0.0001
@@ -68,6 +69,17 @@ Vec4 vclamp(Vec4 a, uint8_t min, uint8_t max) {
 
 Vec4 colour_mul(Vec4 a, Vec4 b) { // Hadamard product
   return (Vec4){{ a.r * b.r, a.g * b.g, a.b * b.b }};
+}
+
+bool meq(float a[4][4], float b[4][4]) {
+  for(uint8_t j = 0; j < 4; ++j) {
+    for(uint8_t i = 0; i < 4; ++i) {
+      if (EPS < fabsf(a[j][i] - b[j][i])) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 typedef struct {
