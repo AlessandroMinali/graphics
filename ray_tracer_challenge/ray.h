@@ -88,8 +88,8 @@ Vec4 pixel_at(Canvas *canvas, int x, int y) {
 void canvas_to_ppm(Canvas *canvas) {
   FILE *f = fopen("ray.ppm", "w+");
   fprintf(f, "P3\n%zu %zu\n255\n", canvas->w, canvas->h);
-  for(uint8_t j = 0; j < canvas->h; ++j) {
-    for(uint8_t i = 0; i < canvas->w; ++i) {
+  for(size_t j = 0; j < canvas->h; ++j) {
+    for(size_t i = 0; i < canvas->w; ++i) {
       Vec4 v = vclamp(vmul(pixel_at(canvas, i, j), 255), 0, 255);
       fprintf(f, "%s%d %d %d", (i == 0 ? "" : " "), (int)v.x, (int)v.y, (int)v.z);
     }

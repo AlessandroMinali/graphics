@@ -23,11 +23,11 @@ int main(int argc, char const *argv[])
   int count = 1;
   while(1) {
     p = tick(e, p);
+    if (p.pos.y <= 0) { break; }
     printf("%d: ", count);
     print_v4(p.pos);
     printf("\n");
     ++count;
-    if (p.pos.y <= 0) { break; }
   }
 
   return 0;
