@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#define FILE_SZ 4096
+
 void assert_f(float actual, float expected, char *msg) {
   if (fabsf(expected - actual) > EPS) { printf("FAILED %s: %0.2f got %0.2f\n", msg, expected, actual); }
 }
@@ -21,6 +23,13 @@ void assert_s(char *actual, char *expected, char *msg) {
   if (strcmp(actual, expected) != 0) {
     printf("FAILED %s:\n%s got\n%s", msg, expected, actual);
   }
+}
+void assert_ppm(char* actual_file, char* expected, char* msg) {
+  char buf[FILE_SZ] = {0};
+  FILE* f = fopen(actual_file, "r");
+  fread(buf, FILE_SZ-1, 1, f);
+  assert_s(buf, expected, msg);
+  fclose(f);
 }
 
 int main(int argc, char const *argv[])
@@ -66,7 +75,11 @@ int main(int argc, char const *argv[])
   assert_v4(pixel_at(&canvas, 2, 3), red, "writing pixel canvas");
 
   Canvas c = canvas_init(5, 3);
-  assert_s(canvas_to_ppm(&c), "P3\n5 3\n255\n", "canvas to ppm");
+  write_pixel(&c, 0, 0, vec4(1.5, 0, 0, 0));
+  write_pixel(&c, 2, 1, vec4(0, 0.5, 0, 0));
+  write_pixel(&c, 4, 2, vec4(-0.5, 0, 1, 0));
+  canvas_to_ppm(&c);
+  assert_ppm("ray.ppm", "P3\n5 3\n255\n255 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 127 0 0 0 0 0 0 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 255\n", "canvas to ppm");
 
   printf("Tests ran.\n");
   return 0;

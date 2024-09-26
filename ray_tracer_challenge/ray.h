@@ -53,6 +53,18 @@ float vdot(Vec4 a, Vec4 b) {
 Vec4 vcross(Vec4 a, Vec4 b) {
   return (Vec4){{a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x }};
 }
+Vec4 vclamp(Vec4 a, uint8_t min, uint8_t max) {
+  return (Vec4){{
+    max < a.x ? max :
+    a.x < min ? min :
+    a.x,
+    max < a.y ? max :
+    a.y < min ? min :
+    a.y,
+    max < a.z ? max :
+    a.z < min ? min :
+    a.z }};
+}
 
 Vec4 colour_mul(Vec4 a, Vec4 b) { // Hadamard product
   return (Vec4){{ a.r * b.r, a.g * b.g, a.b * b.b }};
@@ -73,8 +85,15 @@ void write_pixel(Canvas *canvas, int x, int y, Vec4 v) {
 Vec4 pixel_at(Canvas *canvas, int x, int y) {
   return canvas->pixels[y*canvas->w+x];
 }
-char *canvas_to_ppm(Canvas *canvas) {
-  char *buf = calloc(PPM_HEADER+1, sizeof(char));
-  snprintf(buf, PPM_HEADER, "P3\n%zu %zu\n255\n", canvas->w, canvas->h);
-  return buf;
+void canvas_to_ppm(Canvas *canvas) {
+  FILE *f = fopen("ray.ppm", "w+");
+  fprintf(f, "P3\n%zu %zu\n255\n", canvas->w, canvas->h);
+  for(uint8_t j = 0; j < canvas->h; ++j) {
+    for(uint8_t i = 0; i < canvas->w; ++i) {
+      Vec4 v = vclamp(vmul(pixel_at(canvas, i, j), 255), 0, 255);
+      fprintf(f, "%s%d %d %d", (i == 0 ? "" : " "), (int)v.x, (int)v.y, (int)v.z);
+    }
+    fprintf(f, "\n");
+  }
+  fclose(f);
 }
