@@ -1,27 +1,42 @@
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
+#include <stdio.h>
+
+#define WIDTH  640
+#define HEIGHT 480
+
+double XPOS = 0;
+double YPOS = 0;
+
+void error_callback(int error, const char* description) {
+  fprintf(stderr, "Error: %s\n", description);
+}
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+  XPOS = xpos / WIDTH;
+  YPOS = ypos / HEIGHT;
+}
 
 int main(void) {
-    /* Initialize the library */
-    glfwInit();
+  glfwInit();
 
-    /* Create a windowed mode window and its OpenGL context */
-    GLFWwindow* window;
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Hello World", NULL, NULL);
 
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
+  glfwSetCursorPosCallback(window, cursor_position_callback);
+  glfwSetKeyCallback(window, key_callback);
+  glfwSetErrorCallback(error_callback);
+  // glfwSwapInterval(1); // V-sync
 
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window)) {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+  glfwMakeContextCurrent(window);
+  while (!glfwWindowShouldClose(window)) {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(XPOS,YPOS,0,1);
 
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
-    return 0;
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+  }
+  return 0;
 }
