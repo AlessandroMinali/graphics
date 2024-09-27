@@ -1,0 +1,1 @@
+clang++ hello_opengl.cpp -lglfw -framework OpenGL && ./a.out
