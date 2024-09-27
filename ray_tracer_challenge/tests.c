@@ -144,8 +144,77 @@ int main(int argc, char const *argv[])
                (float [4][4]){{1,2,3,4},
                               {9,10,11,12},
                               {5,6,7,8},
-                              {9,10,11,12},
                               {13,14,15,16},}), false, "check equality mat4");
+
+  float result[4][4];
+  float prev[4][4] = (float[4][4]){{1,2,3,4},{5,6,7,8},{9,8,7,6},{5,4,3,2}};
+  m4mul(
+    prev,
+    (float[4][4]){{-2,1,2,3},{3,2,1,-1},{4,3,6,5},{1,2,7,8}},
+    &result
+  );
+  assert_m4(
+    result,
+    (float[4][4]){{20,22,50,48},{44,54,114,108},{40,58,110,102},{16,26,46,42}},
+    "multiply mat4");
+
+  assert_v4(
+    m4vmul(
+      (float[4][4]){{1,2,3,4},{2,4,4,2},{8,6,4,1},{0,0,0,1}},
+      vec4(1,2,3,1)
+    ),
+    vec4(18,24,33,1),
+    "multiply mat4 and vec4");
+
+  m4mul(prev, I, &result);
+  assert_m4(
+    result,
+    prev,
+    "multiply mat4 with identity");
+
+  m4t((float[4][4]){{0,9,3,0},{9,8,0,8},{1,8,5,3},{0,0,5,8}}, &result);
+  assert_m4(
+    result,
+    (float[4][4]){{0,9,1,0},{9,8,8,0},{3,0,5,5},{0,8,3,8}},
+    "mat4 transpose");
+
+  m4t(I, &result);
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wincompatible-pointer-types-discards-qualifiers"
+  assert_m4(result, I, "mat4 transpose identity");
+  #pragma GCC diagnostic pop
+
+  assert_f(m2det((float[2][2]){{1,5},{-3,2}}), 17, "determinant of m2");
+
+  float result2[2][2];
+  m3subm((float[3][3]){{1,5,0},{-3,2,7},{0,6,-3}}, 0, 2, &result2);
+  assert_m2(
+    result2,
+    (float[2][2]){{-3,2},{0,6}},
+    "m3 sub matrix");
+  float result3[3][3];
+  m4subm((float[4][4]){{-6,1,1,6},{-8,5,8,6},{-1,0,8,2},{-7,1,-1,1}}, 2, 1, &result3);
+  assert_m3(
+    result3,
+    (float[3][3]){{-6,1,6},{-8,8,6},{-7,-1,1}},
+    "m4 sub matrix");
+
+  float tmp3[3][3] = (float[3][3]){{3,5,0},{2,-1,-7},{6,-1,5}};
+  assert_f(m3minor(tmp3, 0, 0),-12, "m3 minor");
+  assert_f(m3cof(tmp3, 0, 0),-12, "m3 cofactor");
+  assert_f(m3minor(tmp3, 1, 0),25, "m3 minor");
+  assert_f(m3cof(tmp3, 1, 0),-25, "m3 cofactor");
+
+  assert_f(m3cof((float[3][3]){{1,2,6},{-5,8,-4},{2,6,4}}, 0, 0), 56, "m3 cofactor");
+  assert_f(m3cof((float[3][3]){{1,2,6},{-5,8,-4},{2,6,4}}, 0, 1), 12, "m3 cofactor");
+  assert_f(m3cof((float[3][3]){{1,2,6},{-5,8,-4},{2,6,4}}, 0, 2), -46, "m3 cofactor");
+  // assert_f(m3det((float[3][3]){{1,2,6},{-5,8,-4},{2,6,4}}), -196, "m3 determinant");
+
+  // assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}, 0, 0), 690, "m4 cofactor");
+  // assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}, 0, 1), 447, "m4 cofactor");
+  // assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}, 0, 2), 210, "m4 cofactor");
+  // assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}, 0, 3), 51, "m4 cofactor");
+  // assert_f(m4det((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}), -4071, "m4 determinant");
 
   printf("Tests ran.\n");
   return 0;
