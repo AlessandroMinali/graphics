@@ -37,7 +37,7 @@ void assert_ppm(char* actual_file, char* expected, char* msg) {
 void assert_m4(float actual[4][4], float expected[4][4], char* msg) {
   for(uint8_t j = 0; j < 4; ++j) {
     for(uint8_t i = 0; i < 4; ++i) {
-      if (actual[j][i] != expected[j][i]) {
+      if (EPS < fabsf(actual[j][i] - expected[j][i])) {
         printf("FAILED %s@[%d][%d]:\n%0.2f got\n%0.2f\n", msg, j, i, expected[j][i], actual[j][i]);
       }
     }
@@ -46,7 +46,7 @@ void assert_m4(float actual[4][4], float expected[4][4], char* msg) {
 void assert_m3(float actual[3][3], float expected[3][3], char* msg) {
   for(uint8_t j = 0; j < 3; ++j) {
     for(uint8_t i = 0; i < 3; ++i) {
-      if (actual[j][i] != expected[j][i]) {
+      if (EPS < fabsf(actual[j][i] - expected[j][i])) {
         printf("FAILED %s@[%d][%d]:\n%0.2f got\n%0.2f\n", msg, j, i, expected[j][i], actual[j][i]);
       }
     }
@@ -208,13 +208,49 @@ int main(int argc, char const *argv[])
   assert_f(m3cof((float[3][3]){{1,2,6},{-5,8,-4},{2,6,4}}, 0, 0), 56, "m3 cofactor");
   assert_f(m3cof((float[3][3]){{1,2,6},{-5,8,-4},{2,6,4}}, 0, 1), 12, "m3 cofactor");
   assert_f(m3cof((float[3][3]){{1,2,6},{-5,8,-4},{2,6,4}}, 0, 2), -46, "m3 cofactor");
-  // assert_f(m3det((float[3][3]){{1,2,6},{-5,8,-4},{2,6,4}}), -196, "m3 determinant");
+  assert_f(m3det((float[3][3]){{1,2,6},{-5,8,-4},{2,6,4}}), -196, "m3 determinant");
 
-  // assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}, 0, 0), 690, "m4 cofactor");
-  // assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}, 0, 1), 447, "m4 cofactor");
-  // assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}, 0, 2), 210, "m4 cofactor");
-  // assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}, 0, 3), 51, "m4 cofactor");
-  // assert_f(m4det((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{1,2,-9,6},{-6,7,7,-9}}), -4071, "m4 determinant");
+  assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{-6,7,7,-9}}, 0, 0), 690, "m4 cofactor");
+  assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{-6,7,7,-9}}, 0, 1), 447, "m4 cofactor");
+  assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{-6,7,7,-9}}, 0, 2), 210, "m4 cofactor");
+  assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{-6,7,7,-9}}, 0, 3), 51, "m4 cofactor");
+  assert_f(m4det((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{-6,7,7,-9}}), -4071, "m4 determinant");
+
+  float tmp4[4][4] = (float[4][4]){{-5,2,6,-8},{1,-5,1,8},{7,7,-6,-7},{1,-3,7,4}};
+  assert_f(m4det(tmp4), 532, "m4 determinant");
+  assert_f(m4cof(tmp4, 2, 3), -160, "m4 cofactor");
+  assert_f(m4cof(tmp4, 3, 2), 105, "m4 cofactor");
+  float result4[4][4];
+  m4inv(tmp4, &result4);
+  assert_m4(
+    result4,
+    (float[4][4]){{0.21805,0.45113,0.24060,-0.04511},{-0.80827,-1.45677,-0.44361,0.52068},{-0.07895,-0.22368,-0.05263,0.19737},{-0.52256,-0.81391,-0.30075,0.30639}},
+    "m4 inv");
+
+  float result5[4][4];
+  m4inv((float[4][4]){{8,-5,9,2},{7,5,6,1},{-6,0,9,6},{-3,0,-9,-4}}, &result5);
+  assert_m4(
+    result5,
+    (float[4][4]){{-0.15385,-0.15385,-0.28205,-0.53846},{-0.07692,0.12308,0.02564,0.03077},{0.35897,0.35897,0.43590,0.92308},{-0.69231,-0.69231,-0.76923,-1.92308}},
+    "m4 inv");
+
+  float result6[4][4];
+  m4inv((float[4][4]){{9,3,0,9},{-5,-2,-6,-3},{-4,9,6,4},{-7,6,6,2}}, &result6);
+  assert_m4(result6,
+    (float[4][4]){{-0.04074,-0.07778,0.14444,-0.22222},{-0.07778,0.03333,0.36667,-0.33333},{-0.02901,-0.14630,-0.10926,0.12963},{0.17778,0.06667,-0.26667,0.33333}},
+    "m4 inv");
+
+  float result7[4][4];
+  float result8[4][4];
+  float result9[4][4];
+  m4mul(
+    (float[4][4]){{3,-9,7,3},{3.-8,2,-9},{-4,4,4,1},{-6,5,-1,1}},
+    (float[4][4]){{8,2,2,2},{3,-1,7,0},{7,0,5,4},{6,-2,0,5}},
+    &result8 // C <- A * B
+  );
+  m4inv((float[4][4]){{8,2,2,2},{3,-1,7,0},{7,0,5,4},{6,-2,0,5}}, &result7); // inv(B)
+  m4mul(result8, result7, &result9); // C * inv(B)
+  assert_m4(result9, (float[4][4]){{3,-9,7,3},{3.-8,2,-9},{-4,4,4,1},{-6,5,-1,1}}, "m4 product by inv");
 
   printf("Tests ran.\n");
   return 0;

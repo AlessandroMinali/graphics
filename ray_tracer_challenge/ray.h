@@ -144,7 +144,35 @@ float m3minor(const float a[3][3], const uint8_t row, const uint8_t col) {
 }
 float m3cof(const float a[3][3], const uint8_t row, const uint8_t col) {
   float z = m3minor(a, row, col);
-  return row+col % 2 == 0 ? z : -z;
+  return (row+col) % 2 == 0 ? z : -z;
+}
+float m3det(const float a[3][3]) {
+  return m3cof(a, 0, 0) * a[0][0] + m3cof(a, 0, 1) * a[0][1] + m3cof(a, 0, 2) * a[0][2];
+}
+float m4minor(const float a[4][4], const uint8_t row, const uint8_t col) {
+  float b[3][3];
+  m4subm(a, row, col, &b);
+  return m3det(b);
+}
+float m4cof(const float a[4][4], const uint8_t row, const uint8_t col) {
+  float z = m4minor(a, row, col);
+  return (row+col) % 2 == 0 ? z : -z;
+}
+float m4det(const float a[4][4]) {
+  return m4cof(a, 0, 0) * a[0][0] + m4cof(a, 0, 1) * a[0][1] + m4cof(a, 0, 2) * a[0][2] + m4cof(a, 0, 3) * a[0][3];
+}
+void m4inv(const float a[4][4], float (*b)[4][4]) {
+  float det = m4det(a);
+  if (det == 0) {
+    printf("ERROR: mat3 non-invertible");
+    exit(1);
+  }
+
+  for (uint8_t j = 0; j < 4; ++j) {
+    for (uint8_t i = 0; i < 4; ++i) {
+      (*b)[i][j] = m4cof(a, j, i) / det;
+    }
+  }
 }
 
 const float I[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
