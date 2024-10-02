@@ -147,7 +147,7 @@ int main(int argc, char const *argv[])
                               {13,14,15,16},}), false, "check equality mat4");
 
   float result[4][4];
-  float prev[4][4] = (float[4][4]){{1,2,3,4},{5,6,7,8},{9,8,7,6},{5,4,3,2}};
+  float prev[4][4] = {{1,2,3,4},{5,6,7,8},{9,8,7,6},{5,4,3,2}};
   m4mul(
     prev,
     (float[4][4]){{-2,1,2,3},{3,2,1,-1},{4,3,6,5},{1,2,7,8}},
@@ -179,10 +179,7 @@ int main(int argc, char const *argv[])
     "mat4 transpose");
 
   m4t(I, &result);
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wincompatible-pointer-types-discards-qualifiers"
   assert_m4(result, I, "mat4 transpose identity");
-  #pragma GCC diagnostic pop
 
   assert_f(m2det((float[2][2]){{1,5},{-3,2}}), 17, "determinant of m2");
 
@@ -199,7 +196,7 @@ int main(int argc, char const *argv[])
     (float[3][3]){{-6,1,6},{-8,8,6},{-7,-1,1}},
     "m4 sub matrix");
 
-  float tmp3[3][3] = (float[3][3]){{3,5,0},{2,-1,-7},{6,-1,5}};
+  float tmp3[3][3] = {{3,5,0},{2,-1,-7},{6,-1,5}};
   assert_f(m3minor(tmp3, 0, 0),-12, "m3 minor");
   assert_f(m3cof(tmp3, 0, 0),-12, "m3 cofactor");
   assert_f(m3minor(tmp3, 1, 0),25, "m3 minor");
@@ -216,7 +213,7 @@ int main(int argc, char const *argv[])
   assert_f(m4cof((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{-6,7,7,-9}}, 0, 3), 51, "m4 cofactor");
   assert_f(m4det((float[4][4]){{-2,-8,3,5},{-3,1,7,3},{1,2,-9,6},{-6,7,7,-9}}), -4071, "m4 determinant");
 
-  float tmp4[4][4] = (float[4][4]){{-5,2,6,-8},{1,-5,1,8},{7,7,-6,-7},{1,-3,7,4}};
+  float tmp4[4][4] = {{-5,2,6,-8},{1,-5,1,8},{7,7,-6,-7},{1,-3,7,4}};
   assert_f(m4det(tmp4), 532, "m4 determinant");
   assert_f(m4cof(tmp4, 2, 3), -160, "m4 cofactor");
   assert_f(m4cof(tmp4, 3, 2), 105, "m4 cofactor");
@@ -317,6 +314,64 @@ int main(int argc, char const *argv[])
   m4mul(trans1, chainm4, &chainm4);
   assert_v4(m4vmul(chainm4, vec4(1,0,1,1)), vec4(15,0,7,1), "chain of matrices");
 
+  Ray r = { vec4(2,3,4,1), vec4(1,0,0,0) };
+  assert_v4(rpos(r, 0), vec4(2,3,4,1), "point along ray");
+  assert_v4(rpos(r, 1), vec4(3,3,4,1), "point along ray");
+  assert_v4(rpos(r, -1), vec4(1,3,4,1), "point along ray");
+  assert_v4(rpos(r, 2.5), vec4(4.5,3,4,1), "point along ray");
+
+  r.org = vec4(0,0,-5,1);
+  r.dir = vec4(0,0,1,0);
+  Sphere s = { vec4(0,0,0,1), 1 };
+  Intersections h = intersect(r, s);
+  assert_f(h.count, 2, "ray hit sphere");
+  assert_f(h.raw[0].t, 4, "ray hit sphere");
+  assert_f(h.raw[1].t, 6, "ray hit sphere");
+  assert_v4(h.raw[0].s.org, s.org, "ray hit sphere sets obj");
+  assert_v4(h.raw[1].s.org, s.org, "ray hit sphere sets obj");
+
+  r.org = vec4(0,1,-5,1);
+  h = intersect(r, s);
+  assert_f(h.count, 2, "ray hit sphere tangent");
+  assert_f(h.raw[0].t, 5, "ray hit sphere tangent");
+  assert_f(h.raw[1].t, 5, "ray hit sphere tangent");
+
+  r.org = vec4(0,2,-5,1);
+  h = intersect(r, s);
+  assert_f(h.count, 0, "ray hit sphere miss");
+
+  r.org = vec4(0,0,0,1);
+  h = intersect(r, s);
+  assert_f(h.count, 2, "ray hit sphere inside");
+  assert_f(h.raw[0].t, -1, "ray hit sphere inside");
+  assert_f(h.raw[1].t, 1, "ray hit sphere inside");
+
+  r.org = vec4(0,0,5,1);
+  h = intersect(r, s);
+  assert_f(h.count, 2, "ray hit sphere behind");
+  assert_f(h.raw[0].t, -6, "ray hit sphere behind");
+  assert_f(h.raw[1].t, -4, "ray hit sphere behind");
+
+  Intersections fake_hits;
+  fake_hits.count = 2;
+  fake_hits.raw[0] = (Hit){1, s};
+  fake_hits.raw[1] = (Hit){2, s};
+  assert_f(hit(&fake_hits).t, 1, "hit all pos");
+  fake_hits.raw[0] = (Hit){-1, s};
+  fake_hits.raw[1] = (Hit){1, s};
+  assert_f(hit(&fake_hits).t, 1, "hit some neg");
+  fake_hits.raw[0] = (Hit){-2, s};
+  fake_hits.raw[1] = (Hit){-1, s};
+  assert_f(hit(&fake_hits).t, FLT_MAX, "hit all neg");
+  fake_hits.count = 4;
+  fake_hits.raw[0] = (Hit){5, s};
+  fake_hits.raw[1] = (Hit){7, s};
+  fake_hits.raw[2] = (Hit){-3, s};
+  fake_hits.raw[3] = (Hit){2, s};
+  assert_f(hit(&fake_hits).t, 2, "hit with many");
+
+
   printf("Tests ran.\n");
+
   return 0;
 }

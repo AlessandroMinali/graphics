@@ -4,19 +4,24 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
+#include <float.h>
 
 #define EPS 0.0001
 #define PI 3.14159
+#define I (float [4][4]){{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}}
+#define MAX_HIT 256
 #define PPM_HEADER 127
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc11-extensions"
 typedef union {
-  struct  {
+  struct {
     float x;
     float y;
     float z;
     float w;
   };
-  struct  {
+  struct {
     float r;
     float g;
     float b;
@@ -24,6 +29,32 @@ typedef union {
   };
 } Vec4;
 
+typedef struct {
+  Vec4 org;
+  Vec4 dir;
+} Ray;
+typedef struct {
+  Vec4 org;
+  float r;
+} Sphere;
+typedef union {
+  struct {
+    float t;
+    Sphere s;
+  };
+} Hit;
+typedef struct {
+  int count;
+  Hit raw[MAX_HIT];
+} Intersections;
+
+typedef struct {
+  size_t w;
+  size_t h;
+  size_t sz;
+  Vec4 *pixels;
+} Canvas;
+#pragma GCC diagnostic pop
 void print_v4(const Vec4 v) { printf("(%0.2f, %0.2f, %0.2f, %0.2f)", v.x, v.y, v.z, v.w); }
 Vec4 vec4(const float x, const float y, const float z, const float w) {
   return (Vec4){{ x, y, z, w }};
@@ -236,14 +267,41 @@ void shearm4(const float xy, const float xz,
   (*a)[2][1] = zy;
 }
 
-const float I[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
 
-typedef struct {
-  size_t w;
-  size_t h;
-  size_t sz;
-  Vec4 *pixels;
-} Canvas;
+Vec4 rpos(const Ray r, const float t) {
+  return vadd(r.org, vmul(r.dir, t));
+}
+Intersections intersect(const Ray r, const Sphere s) {
+  Vec4 r_s = vsub(r.org, s.org);
+
+  float a = vdot(r.dir, r.dir);
+  float b = 2 * vdot(r.dir, r_s);
+  float c = vdot(r_s, r_s) - 1;
+  float d = b*b - 4*a*c;
+
+  if (d < 0) {
+    return (Intersections){ .count = 0 };
+  } else {
+    float t1 = (-b - sqrtf(d)) / (2 * a);
+    float t2 = (-b + sqrtf(d)) / (2 * a);
+
+    return (Intersections){ .count = 2, .raw = {{t1, s}, {t2, s}}};
+  }
+}
+
+Hit hit(Intersections *intersections) {
+  Hit tmp;
+  tmp.t = FLT_MAX;
+  for(size_t i = 0; i < intersections->count; ++i) {
+    if (intersections->raw[i].t > 0 && intersections->raw[i].t < tmp.t) {
+      tmp.t = intersections->raw[i].t;
+      tmp.s = intersections->raw[i].s;
+    }
+  }
+
+  return (Hit){tmp.t, tmp.s};
+}
+
 Canvas canvas_init(int w, int h) {
   return (Canvas){ w, h, w*h, calloc(w * h, sizeof(Vec4)) };
 }
