@@ -271,6 +271,26 @@ int main(int argc, char const *argv[])
   scalem4(-1,1,1, &scale1);
   assert_v4(m4vmul(scale1, vec4(2,3,4,1)), vec4(-2,3,4,1), "reflection via scale matrix");
 
+  float eighthrot[4][4];
+  rotxm4(PI/4, &eighthrot);
+  float quartrot[4][4];
+  rotxm4(PI/2, &quartrot);
+  assert_v4(m4vmul(eighthrot, vec4(0,1,0,1)), vec4(0,sqrtf(2)/2,sqrtf(2)/2,1), "rotate around x-axis");
+  assert_v4(m4vmul(quartrot, vec4(0,1,0,1)), vec4(0,0,1,1), "rotate around x-axis");
+  float inveighthrot[4][4];
+  m4inv(eighthrot, &inveighthrot);
+  assert_v4(m4vmul(inveighthrot, vec4(0,1,0,1)), vec4(0,sqrtf(2)/2,-sqrtf(2)/2,1), "rotate around x-axis");
+
+  rotym4(PI/4, &eighthrot);
+  rotym4(PI/2, &quartrot);
+  assert_v4(m4vmul(eighthrot, vec4(0,0,1,1)), vec4(sqrtf(2)/2,0,sqrtf(2)/2,1), "rotate around y-axis");
+  assert_v4(m4vmul(quartrot, vec4(0,0,1,1)), vec4(1,0,0,1), "rotate around y-axis");
+
+  rotzm4(PI/4, &eighthrot);
+  rotzm4(PI/2, &quartrot);
+  assert_v4(m4vmul(eighthrot, vec4(0,1,0,1)), vec4(-sqrtf(2)/2,sqrtf(2)/2,0,1), "rotate around z-axis");
+  assert_v4(m4vmul(quartrot, vec4(0,1,0,1)), vec4(-1,0,0,1), "rotate around z-axis");
+
   printf("Tests ran.\n");
   return 0;
 }
