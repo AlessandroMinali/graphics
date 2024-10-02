@@ -305,6 +305,18 @@ int main(int argc, char const *argv[])
   shearm4(0,0,0,0,0,1, &shear);
   assert_v4(m4vmul(shear, vec4(2,3,4,1)), vec4(2,3,7,1), "shear matrix");
 
+  rotxm4(PI/2, &quartrot);
+  scalem4(5,5,5, &scale1);
+  transm4(10,5,7, &trans1);
+  assert_v4(m4vmul(quartrot, vec4(1,0,1,1)), vec4(1,-1,0,1), "sequence of matrices");
+  assert_v4(m4vmul(scale1, vec4(1,-1,0,1)), vec4(5,-5,0,1), "sequence of matrices");
+  assert_v4(m4vmul(trans1, vec4(5,-5,0,1)), vec4(15,0,7,1), "sequence of matrices");
+
+  float chainm4[4][4];
+  m4mul(scale1, quartrot, &chainm4);
+  m4mul(trans1, chainm4, &chainm4);
+  assert_v4(m4vmul(chainm4, vec4(1,0,1,1)), vec4(15,0,7,1), "chain of matrices");
+
   printf("Tests ran.\n");
   return 0;
 }
