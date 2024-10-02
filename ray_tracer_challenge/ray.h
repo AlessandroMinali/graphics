@@ -181,6 +181,16 @@ void transm4(const float x, const float y, const float z, float (*a)[4][4]) {
   (*a)[1][3] = y;
   (*a)[2][3] = z;
 }
+void scalem4(const float x, const float y, const float z, float (*a)[4][4]) {
+  (*a)[0][1] = (*a)[0][2] = (*a)[0][3] =
+  (*a)[1][0] = (*a)[1][2] = (*a)[1][3] =
+  (*a)[2][0] = (*a)[2][1] = (*a)[2][3] =
+  (*a)[3][0] = (*a)[3][1] = (*a)[3][2] = 0;
+  (*a)[0][0] = x;
+  (*a)[1][1] = y;
+  (*a)[2][2] = z;
+  (*a)[3][3] = 1;
+}
 
 const float I[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
 
