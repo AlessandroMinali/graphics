@@ -252,6 +252,14 @@ int main(int argc, char const *argv[])
   m4mul(result8, result7, &result9); // C * inv(B)
   assert_m4(result9, (float[4][4]){{3,-9,7,3},{3.-8,2,-9},{-4,4,4,1},{-6,5,-1,1}}, "m4 product by inv");
 
+  float trans1[4][4] = {{0}};
+  transm4(5, -3, 2, &trans1);
+  assert_v4(m4vmul(trans1, vec4(-3,4,5,1)), vec4(2,1,7,1), "transformation matrix");
+  float invtrans1[4][4];
+  m4inv(trans1, &invtrans1);
+  assert_v4(m4vmul(invtrans1, vec4(-3,4,5,1)), vec4(-8,7,3,1), "inverse transformation matrix");
+  assert_v4(m4vmul(trans1, vec4(-3,4,5,0)), vec4(-3,4,5,0), "transformation matrix with vector");
+
   printf("Tests ran.\n");
   return 0;
 }

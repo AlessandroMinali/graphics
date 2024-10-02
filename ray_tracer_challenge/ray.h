@@ -164,7 +164,7 @@ float m4det(const float a[4][4]) {
 void m4inv(const float a[4][4], float (*b)[4][4]) {
   float det = m4det(a);
   if (det == 0) {
-    printf("ERROR: mat3 non-invertible");
+    printf("ERROR: mat4 non-invertible");
     exit(1);
   }
 
@@ -173,6 +173,13 @@ void m4inv(const float a[4][4], float (*b)[4][4]) {
       (*b)[i][j] = m4cof(a, j, i) / det;
     }
   }
+}
+void transm4(const float x, const float y, const float z, float (*a)[4][4]) {
+  (*a)[0][0] = (*a)[1][1] = (*a)[2][2] = (*a)[3][3] = 1;
+  (*a)[0][1] = (*a)[0][2] = (*a)[1][0] = (*a)[1][2] = (*a)[2][0] = (*a)[2][1] = (*a)[3][0] = (*a)[3][1] = (*a)[3][2] = 0;
+  (*a)[0][3] = x;
+  (*a)[1][3] = y;
+  (*a)[2][3] = z;
 }
 
 const float I[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
