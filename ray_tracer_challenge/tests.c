@@ -291,6 +291,20 @@ int main(int argc, char const *argv[])
   assert_v4(m4vmul(eighthrot, vec4(0,1,0,1)), vec4(-sqrtf(2)/2,sqrtf(2)/2,0,1), "rotate around z-axis");
   assert_v4(m4vmul(quartrot, vec4(0,1,0,1)), vec4(-1,0,0,1), "rotate around z-axis");
 
+  float shear[4][4];
+  shearm4(1,0,0,0,0,0, &shear);
+  assert_v4(m4vmul(shear, vec4(2,3,4,1)), vec4(5,3,4,1), "shear matrix");
+  shearm4(0,1,0,0,0,0, &shear);
+  assert_v4(m4vmul(shear, vec4(2,3,4,1)), vec4(6,3,4,1), "shear matrix");
+  shearm4(0,0,1,0,0,0, &shear);
+  assert_v4(m4vmul(shear, vec4(2,3,4,1)), vec4(2,5,4,1), "shear matrix");
+  shearm4(0,0,0,1,0,0, &shear);
+  assert_v4(m4vmul(shear, vec4(2,3,4,1)), vec4(2,7,4,1), "shear matrix");
+  shearm4(0,0,0,0,1,0, &shear);
+  assert_v4(m4vmul(shear, vec4(2,3,4,1)), vec4(2,3,6,1), "shear matrix");
+  shearm4(0,0,0,0,0,1, &shear);
+  assert_v4(m4vmul(shear, vec4(2,3,4,1)), vec4(2,3,7,1), "shear matrix");
+
   printf("Tests ran.\n");
   return 0;
 }

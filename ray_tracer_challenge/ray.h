@@ -222,6 +222,19 @@ void rotzm4(const float rad, float (*a)[4][4]) {
   (*a)[1][0] = (*a)[0][1] = sin(rad);
   (*a)[0][1] = -(*a)[0][1];
 }
+void shearm4(const float xy, const float xz,
+             const float yx, const float yz,
+             const float zx, const float zy,
+             float (*a)[4][4]) {
+  (*a)[0][0] = (*a)[1][1] = (*a)[2][2] = (*a)[3][3] = 1;
+  (*a)[3][0] = (*a)[3][1] = (*a)[3][2] = (*a)[0][3] = (*a)[1][3] = (*a)[2][3] = 0;
+  (*a)[0][1] = xy;
+  (*a)[0][2] = xz;
+  (*a)[1][0] = yx;
+  (*a)[1][2] = yz;
+  (*a)[2][0] = zx;
+  (*a)[2][1] = zy;
+}
 
 const float I[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
 
