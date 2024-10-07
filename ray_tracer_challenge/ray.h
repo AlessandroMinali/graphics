@@ -56,7 +56,7 @@ typedef struct {
   Vec4 *pixels;
 } Canvas;
 #pragma GCC diagnostic pop
-void print_v4(const Vec4 v) { printf("( %0.2f, %0.2f, %0.2f, %0.2f )", v.x, v.y, v.z, v.w); }
+static inline void print_v4(const Vec4 v) { printf("( %0.2f, %0.2f, %0.2f, %0.2f )", v.x, v.y, v.z, v.w); }
 Vec4 vec4(const float x, const float y, const float z, const float w) {
   return (Vec4){{ x, y, z, w }};
 }
@@ -104,7 +104,7 @@ Vec4 colour_mul(const Vec4 a, const Vec4 b) { // Hadamard product
   return (Vec4){{ a.r * b.r, a.g * b.g, a.b * b.b }};
 }
 
-void print_m4(const float a[4][4]) {
+static inline void print_m4(const float a[4][4]) {
   for(uint8_t j = 0; j < 4; ++j) { printf("[ %0.2f, %0.2f, %0.2f, %0.2f ]\n", a[j][0],a[j][1],a[j][2],a[j][3]);}
   printf("\n");
 }

@@ -1,11 +1,15 @@
 #include "ray.h"
 
+static inline float normalize(float v, float min, float max) {
+  return (v - min) / (max - min);
+}
+
 int main(int argc, char** argv) {
   Ray r = { vec4(0,0,-5,1), vec4(0,0,1,0) };
   float wall_z = 10;
   float wall_size = 7;
 
-  float canvas_pixels = 100;
+  float canvas_pixels = 400;
   float pixel_size = wall_size / canvas_pixels;
   float half = wall_size / 2.0;
 
@@ -14,11 +18,11 @@ int main(int argc, char** argv) {
 
   // scalem4(1,0.5,1, &s.transform);
 
-  scalem4(0.5,1,1, &s.transform);
+  // scalem4(0.5,1,1, &s.transform);
 
   // float scale[4][4]; scalem4(0.5,1,1, &scale);
-  float rotz[4][4]; rotzm4(PI/4, &rotz);
-  m4mul(rotz, s.transform, &s.transform);
+  // float rotz[4][4]; rotzm4(PI/4, &rotz);
+  // m4mul(rotz, scale, &s.transform);
 
   // float scale[4][4]; scalem4(0.5,1,1, &scale);
   // float shear[4][4]; shearm4(1,0,0,0,0,0, &shear);
@@ -35,7 +39,8 @@ int main(int argc, char** argv) {
       Intersections intersections = intersect(r, s);
 
       if (0 < intersections.count) {
-        write_pixel(&c, i, j, vmul(clr, hit(&intersections).t / wall_z));
+        float n = normalize(hit(&intersections).t, wall_z / 2, wall_z / 2 - 1);
+        write_pixel(&c, i, j, vmul(clr, n*n));
       }
     }
   }
