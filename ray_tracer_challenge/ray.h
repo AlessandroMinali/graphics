@@ -8,7 +8,7 @@
 
 #define EPS 0.0001
 #define PI 3.14159
-#define I (float [4][4]){{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}}
+#define I {{1.0,0,0,0},{0,1.0,0,0},{0,0,1.0,0},{0,0,0,1.0}}
 #define MAX_HIT 256
 #define PPM_HEADER 127
 
@@ -36,6 +36,7 @@ typedef struct {
 typedef struct {
   Vec4 org;
   float r;
+  float transform[4][4];
 } Sphere;
 typedef union {
   struct {
@@ -55,7 +56,7 @@ typedef struct {
   Vec4 *pixels;
 } Canvas;
 #pragma GCC diagnostic pop
-void print_v4(const Vec4 v) { printf("(%0.2f, %0.2f, %0.2f, %0.2f)", v.x, v.y, v.z, v.w); }
+void print_v4(const Vec4 v) { printf("( %0.2f, %0.2f, %0.2f, %0.2f )", v.x, v.y, v.z, v.w); }
 Vec4 vec4(const float x, const float y, const float z, const float w) {
   return (Vec4){{ x, y, z, w }};
 }
@@ -103,6 +104,10 @@ Vec4 colour_mul(const Vec4 a, const Vec4 b) { // Hadamard product
   return (Vec4){{ a.r * b.r, a.g * b.g, a.b * b.b }};
 }
 
+void print_m4(const float a[4][4]) {
+  for(uint8_t j = 0; j < 4; ++j) { printf("[ %0.2f, %0.2f, %0.2f, %0.2f ]\n", a[j][0],a[j][1],a[j][2],a[j][3]);}
+  printf("\n");
+}
 bool meq(const float a[4][4], const float b[4][4]) {
   for(uint8_t j = 0; j < 4; ++j) {
     for(uint8_t i = 0; i < 4; ++i) {
@@ -114,12 +119,18 @@ bool meq(const float a[4][4], const float b[4][4]) {
   return true;
 }
 void m4mul(const float a[4][4], const float b[4][4], float (*c)[4][4]) {
+  float t[4][4];
   for(uint8_t j = 0; j < 4; ++j) {
     for(uint8_t i = 0; i < 4; ++i) {
-      (*c)[j][i] = a[j][0] * b[0][i] +
+      t[j][i] = a[j][0] * b[0][i] +
                 a[j][1] * b[1][i] +
                 a[j][2] * b[2][i] +
                 a[j][3] * b[3][i];
+    }
+  }
+  for(uint8_t j = 0; j < 4; ++j) {
+    for(uint8_t i = 0; i < 4; ++i) {
+      (*c)[j][i] = t[j][i];
     }
   }
 }
@@ -132,9 +143,15 @@ Vec4 m4vmul(const float a[4][4], const Vec4 v) {
   }};
 }
 void m4t(const float a[4][4], float (*b)[4][4]) {
+  float t[4][4];
   for(uint8_t j = 0; j < 4; ++j) {
     for(uint8_t i = 0; i < 4; ++i) {
-      (*b)[j][i] = a[i][j];
+      t[j][i] = a[i][j];
+    }
+  }
+  for(uint8_t j = 0; j < 4; ++j) {
+    for(uint8_t i = 0; i < 4; ++i) {
+      (*b)[j][i] = t[j][i];
     }
   }
 }
@@ -196,7 +213,7 @@ float m4det(const float a[4][4]) {
 void m4inv(const float a[4][4], float (*b)[4][4]) {
   float det = m4det(a);
   if (det == 0) {
-    printf("ERROR: mat4 non-invertible");
+    printf("ERROR: mat4 non-invertible\n");
     exit(1);
   }
 
@@ -267,15 +284,23 @@ void shearm4(const float xy, const float xz,
   (*a)[2][1] = zy;
 }
 
-
+Sphere sphere() {
+  return (Sphere){ vec4(0,0,0,1), 1, I };
+}
 Vec4 rpos(const Ray r, const float t) {
   return vadd(r.org, vmul(r.dir, t));
 }
+Ray rtrans(const Ray r, const float (*a)[4][4]) {
+  return (Ray){m4vmul((*a), r.org), m4vmul((*a), r.dir)};
+}
 Intersections intersect(const Ray r, const Sphere s) {
-  Vec4 r_s = vsub(r.org, s.org);
+  float t[4][4] = {{0}};
+  m4inv(s.transform, &t);
+  Ray r_t = rtrans(r, &t);
 
-  float a = vdot(r.dir, r.dir);
-  float b = 2 * vdot(r.dir, r_s);
+  Vec4 r_s = vsub(r_t.org, s.org);
+  float a = vdot(r_t.dir, r_t.dir);
+  float b = 2 * vdot(r_t.dir, r_s);
   float c = vdot(r_s, r_s) - 1;
   float d = b*b - 4*a*c;
 
@@ -288,7 +313,6 @@ Intersections intersect(const Ray r, const Sphere s) {
     return (Intersections){ .count = 2, .raw = {{t1, s}, {t2, s}}};
   }
 }
-
 Hit hit(Intersections *intersections) {
   Hit tmp;
   tmp.t = FLT_MAX;

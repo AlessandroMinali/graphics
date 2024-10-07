@@ -166,7 +166,7 @@ int main(int argc, char const *argv[])
     vec4(18,24,33,1),
     "multiply mat4 and vec4");
 
-  m4mul(prev, I, &result);
+  m4mul(prev, (float[4][4])I, &result);
   assert_m4(
     result,
     prev,
@@ -178,8 +178,8 @@ int main(int argc, char const *argv[])
     (float[4][4]){{0,9,1,0},{9,8,8,0},{3,0,5,5},{0,8,3,8}},
     "mat4 transpose");
 
-  m4t(I, &result);
-  assert_m4(result, I, "mat4 transpose identity");
+  m4t((float[4][4])I, &result);
+  assert_m4(result, (float[4][4])I, "mat4 transpose identity");
 
   assert_f(m2det((float[2][2]){{1,5},{-3,2}}), 17, "determinant of m2");
 
@@ -309,9 +309,10 @@ int main(int argc, char const *argv[])
   assert_v4(m4vmul(scale1, vec4(1,-1,0,1)), vec4(5,-5,0,1), "sequence of matrices");
   assert_v4(m4vmul(trans1, vec4(5,-5,0,1)), vec4(15,0,7,1), "sequence of matrices");
 
+  float scale1_quartrot[4][4];
   float chainm4[4][4];
-  m4mul(scale1, quartrot, &chainm4);
-  m4mul(trans1, chainm4, &chainm4);
+  m4mul(scale1, quartrot, &scale1_quartrot);
+  m4mul(trans1, scale1_quartrot, &chainm4);
   assert_v4(m4vmul(chainm4, vec4(1,0,1,1)), vec4(15,0,7,1), "chain of matrices");
 
   Ray r = { vec4(2,3,4,1), vec4(1,0,0,0) };
@@ -322,7 +323,7 @@ int main(int argc, char const *argv[])
 
   r.org = vec4(0,0,-5,1);
   r.dir = vec4(0,0,1,0);
-  Sphere s = { vec4(0,0,0,1), 1 };
+  Sphere s = sphere();
   Intersections h = intersect(r, s);
   assert_f(h.count, 2, "ray hit sphere");
   assert_f(h.raw[0].t, 4, "ray hit sphere");
@@ -370,6 +371,42 @@ int main(int argc, char const *argv[])
   fake_hits.raw[3] = (Hit){2, s};
   assert_f(hit(&fake_hits).t, 2, "hit with many");
 
+  float transray[4][4] = {{0}};
+  transm4(3,4,5, &transray);
+  r.org = vec4(1,2,3,1);
+  r.dir = vec4(0,1,0,0);
+  r = rtrans(r, &transray);
+  assert_v4(r.org, vec4(4,6,8,1), "translate ray");
+  assert_v4(r.dir, vec4(0,1,0,0), "translate ray");
+
+  scalem4(2,3,4, &transray);
+  r.org = vec4(1,2,3,1);
+  r = rtrans(r, &transray);
+  assert_v4(r.org, vec4(2,6,12,1), "scale ray");
+  assert_v4(r.dir, vec4(0,3,0,0), "scale ray");
+
+  float transsphere[4][4] = {{0}};
+  s = sphere();
+  assert_m4(s.transform, (float[4][4]) I, "sphere transformation");
+  transm4(2,3,4, &transsphere);
+  transm4(2,3,4, &s.transform);
+  assert_m4(s.transform, transsphere, "sphere transformation");
+
+  r.org = vec4(0,0,-5,1);
+  r.dir = vec4(0,0,1,0);
+  s = sphere();
+  scalem4(2,2,2, &s.transform);
+  h = intersect(r, s);
+  assert_f(h.count, 2, "scaled sphere hit");
+  assert_f(h.raw[0].t, 3, "scaled sphere hit");
+  assert_f(h.raw[1].t, 7, "scaled sphere hit");
+
+  r.org = vec4(0,0,-5,1);
+  r.dir = vec4(0,0,1,0);
+  s = sphere();
+  transm4(5,0,0, &s.transform);
+  h = intersect(r, s);
+  assert_f(h.count, 0, "translated sphere hit");
 
   printf("Tests ran.\n");
 
