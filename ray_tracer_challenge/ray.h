@@ -29,14 +29,28 @@ typedef union {
   };
 } Vec4;
 
-typedef struct {
-  Vec4 org;
-  Vec4 dir;
+typedef union {
+  struct {
+    Vec4 org;
+    Vec4 dir;
+  };
+  struct { // Point Light
+    Vec4 pos;
+    Vec4 pow;
+  };
 } Ray;
+typedef struct {
+    Vec4 clr;
+    float ambient;
+    float diffuse;
+    float specular;
+    float shininess;
+} Material;
 typedef struct {
   Vec4 org;
   float r;
   float transform[4][4];
+  Material material;
 } Sphere;
 typedef union {
   struct {
@@ -217,9 +231,15 @@ void m4inv(const float a[4][4], float (*b)[4][4]) {
     exit(1);
   }
 
+  float t[4][4];
   for (uint8_t j = 0; j < 4; ++j) {
     for (uint8_t i = 0; i < 4; ++i) {
-      (*b)[i][j] = m4cof(a, j, i) / det;
+      t[i][j] = m4cof(a, j, i) / det;
+    }
+  }
+  for(uint8_t j = 0; j < 4; ++j) {
+    for(uint8_t i = 0; i < 4; ++i) {
+      (*b)[j][i] = t[j][i];
     }
   }
 }
@@ -285,16 +305,50 @@ void shearm4(const float xy, const float xz,
 }
 
 Sphere sphere() {
-  return (Sphere){ vec4(0,0,0,1), 1, I };
+  return (Sphere){ vec4(0,0,0,1), 1, I, { {{1,1,1,1}}, 0.1, 0.9, 0.9, 200 } };
 }
+Vec4 snrm(const Sphere s, const Vec4 p) {
+  float t[4][4];
+
+  m4inv(s.transform, &t);
+  Vec4 o_n = vsub(m4vmul(t, p), s.org);
+  m4t(t, &t);
+  Vec4 w_n = m4vmul(t, o_n);
+  w_n.w = 0;
+  return vnrm(w_n);
+}
+
+Vec4 reflect(Vec4 in, Vec4 nrm) {
+  return vsub(in, vmul(nrm, vdot(in, nrm) * 2));
+}
+Vec4 lighting(Material m, Ray l, Vec4 p, Vec4 e, Vec4 n) {
+  Vec4 clr = colour_mul(m.clr, l.pow);
+  Vec4 lightDir = vnrm(vsub(l.pos, p));
+
+  float g_term = vdot(n, lightDir);
+  if (g_term <= 0) return vec4(0,0,0,1);
+
+  float a = m.ambient;
+  float d = m.diffuse * g_term;
+
+  // Vec4 h = vnrm(vadd(lightDir, e));
+  // float s = m.specular * powf(vdot(h, n), m.shininess); // Blinn
+  Vec4 r = reflect(vneg(lightDir), n);
+  float s = m.specular * powf(vdot(r, e), m.shininess); // Phong
+
+  clr = vmul(clr, a+d+s);
+  clr.a = 1;
+  return clr;
+}
+
 Vec4 rpos(const Ray r, const float t) {
   return vadd(r.org, vmul(r.dir, t));
 }
 Ray rtrans(const Ray r, const float (*a)[4][4]) {
-  return (Ray){m4vmul((*a), r.org), m4vmul((*a), r.dir)};
+  return (Ray){{ m4vmul((*a), r.org), m4vmul((*a), r.dir) }};
 }
 Intersections intersect(const Ray r, const Sphere s) {
-  float t[4][4] = {{0}};
+  float t[4][4];
   m4inv(s.transform, &t);
   Ray r_t = rtrans(r, &t);
 

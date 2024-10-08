@@ -315,7 +315,7 @@ int main(int argc, char const *argv[])
   m4mul(trans1, scale1_quartrot, &chainm4);
   assert_v4(m4vmul(chainm4, vec4(1,0,1,1)), vec4(15,0,7,1), "chain of matrices");
 
-  Ray r = { vec4(2,3,4,1), vec4(1,0,0,0) };
+  Ray r = {{ vec4(2,3,4,1), vec4(1,0,0,0) }};
   assert_v4(rpos(r, 0), vec4(2,3,4,1), "point along ray");
   assert_v4(rpos(r, 1), vec4(3,3,4,1), "point along ray");
   assert_v4(rpos(r, -1), vec4(1,3,4,1), "point along ray");
@@ -407,6 +407,40 @@ int main(int argc, char const *argv[])
   transm4(5,0,0, &s.transform);
   h = intersect(r, s);
   assert_f(h.count, 0, "translated sphere hit");
+
+  s = sphere();
+  assert_v4(snrm(s, vec4(1,0,0,1)), vec4(1,0,0,0), "normal of sphere");
+  assert_v4(snrm(s, vec4(0,1,0,1)), vec4(0,1,0,0), "normal of sphere");
+  assert_v4(snrm(s, vec4(0,0,1,1)), vec4(0,0,1,0), "normal of sphere");
+  float tmp = sqrtf(3) / 3;
+  assert_v4(snrm(s, vec4(tmp,tmp,tmp,1)), vec4(tmp,tmp,tmp,0), "normal of sphere");
+  assert_v4(snrm(s, vec4(tmp,tmp,tmp,1)), vnrm(vec4(tmp,tmp,tmp,0)), "normal of sphere is normalized");
+
+  transm4(0,1,0, &s.transform);
+  assert_v4(snrm(s, vec4(0,1.70711,-0.70711,1)), vec4(0,0.70711,-0.70711,0), "normal of translated sphere");
+  scalem4(1,0.5,1, &s.transform);
+  rotzm4(PI/5, &transsphere);
+  m4mul(s.transform, transsphere, &s.transform);
+  assert_v4(snrm(s, vec4(0,sqrtf(2)/2,-sqrtf(2)/2,1)), vec4(0,0.97014,-0.24254,0), "normal of scaled+rotz sphere");
+
+  assert_v4(reflect(vec4(1,-1,0,0), vec4(0,1,0,0)), vec4(1,1,0,0), "reflect vector");
+  assert_v4(reflect(vec4(0,-1,0,0), vec4(sqrtf(2)/2,sqrtf(2)/2,0,0)), vec4(1,0,0,0), "reflect vector");
+
+  Vec4 eye = vec4(0,0,-1,0);
+  Vec4 nrm = vec4(0,0,-1,0);
+  Ray light = {{ vec4(0,0,-10,1), vec4(1,1,1,1) }};
+  Vec4 pos = vec4(0,0,0,1);
+  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(1.9,1.9,1.9,1), "eye between light and surface");
+  eye = vec4(0,sqrtf(2)/2,-sqrtf(2)/2,0);
+  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(1,1,1,1), "eye 45deg between light and surface");
+  eye = vec4(0,0,-1,0);
+  light.pos = vec4(0,10,-10,1);
+  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(0.7364,0.7364,0.7364,1), "eye between light 45deg and surface");
+  eye = vec4(0,-sqrtf(2)/2,-sqrtf(2)/2,0);
+  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(1.6364,1.6364,1.6364,1), "eye reflect light at surface");
+  light.pos = vec4(0,0,10,1);
+  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(0,0,0,1), "light behind surface");
+
 
   printf("Tests ran.\n");
 
