@@ -430,17 +430,73 @@ int main(int argc, char const *argv[])
   Vec4 nrm = vec4(0,0,-1,0);
   Ray light = {{ vec4(0,0,-10,1), vec4(1,1,1,1) }};
   Vec4 pos = vec4(0,0,0,1);
-  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(1.9,1.9,1.9,1), "eye between light and surface");
+  assert_v4(lighting(s.material, light, pos, eye, nrm), vec4(1.9,1.9,1.9,1), "eye between light and surface");
   eye = vec4(0,sqrtf(2)/2,-sqrtf(2)/2,0);
-  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(1,1,1,1), "eye 45deg between light and surface");
+  assert_v4(lighting(s.material, light, pos, eye, nrm), vec4(1,1,1,1), "eye 45deg between light and surface");
   eye = vec4(0,0,-1,0);
   light.pos = vec4(0,10,-10,1);
-  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(0.7364,0.7364,0.7364,1), "eye between light 45deg and surface");
+  assert_v4(lighting(s.material, light, pos, eye, nrm), vec4(0.7364,0.7364,0.7364,1), "eye between light 45deg and surface");
   eye = vec4(0,-sqrtf(2)/2,-sqrtf(2)/2,0);
-  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(1.6364,1.6364,1.6364,1), "eye reflect light at surface");
+  assert_v4(lighting(s.material, light, pos, eye, nrm), vec4(1.6364,1.6364,1.6364,1), "eye reflect light at surface");
   light.pos = vec4(0,0,10,1);
-  assert_v4(lighting(s.m, light, pos, eye, nrm), vec4(0,0,0,1), "light behind surface");
+  assert_v4(lighting(s.material, light, pos, eye, nrm), vec4(0.1,0.1,0.1,1), "light behind surface");
 
+  World w = world();
+  assert_v4(w.light.pos, vec4(-10,10,-10,1), "world light");
+  assert_v4(w.light.pow, vec4(1,1,1,1), "world light");
+  assert_v4(w.obj[0].material.clr, vec4(0.8,1,0.6,1), "world sphere1 material");
+  assert_f(w.obj[0].material.diffuse, 0.7, "world sphere1 material");
+  assert_f(w.obj[0].material.specular, 0.2, "world sphere1 material");
+  scalem4(0.5,0.5,0.5,&transsphere);
+  assert_m4(w.obj[1].transform, transsphere, "world sphere2 transform");
+
+  r.org = vec4(0,0,-5,1);
+  r.dir = vec4(0,0,1,0);
+  h = intersect_world(r, w);
+  assert_f(h.count, 4, "world intersections");
+  assert_f(h.raw[0].t, 4, "world intersections");
+  assert_f(h.raw[1].t, 4.5, "world intersections");
+  assert_f(h.raw[2].t, 5.5, "world intersections");
+  assert_f(h.raw[3].t, 6, "world intersections");
+
+  s = sphere();
+  Computations comp = prepare_computations((Hit){{4, s}}, r);
+  assert_f(comp.hit.t, 4, "pre computation");
+  assert_v4(comp.hit.s.org, s.org, "pre computation");
+  assert_f(comp.hit.s.r, s.r, "pre computation");
+  assert_v4(comp.pos, vec4(0,0,-1,1), "pre computation");
+  assert_v4(comp.eye, vec4(0,0,-1,0), "pre computation");
+  assert_v4(comp.nrm, vec4(0,0,-1,0), "pre computation");
+  assert_f(comp.inside, false, "pre computation");
+
+  r.org = vec4(0,0,0,1);
+  comp = prepare_computations((Hit){{1, s}}, r);
+  assert_v4(comp.pos, vec4(0,0,1,1), "pre computation");
+  assert_v4(comp.eye, vec4(0,0,-1,0), "pre computation");
+  assert_v4(comp.nrm, vec4(0,0,-1,0), "pre computation");
+  assert_f(comp.inside, true, "pre computation");
+
+  r.org = vec4(0,0,-5,1);
+  s = w.obj[0];
+  comp = prepare_computations((Hit){{4, s}}, r);
+  assert_v4(shade_hit(w, comp), vec4(0.38066, 0.47583, 0.2855, 1), "shade hit");
+  r.org = vec4(0,0,0,1);
+  w.light.pos = vec4(0,0.25,0,1);
+  s = w.obj[1];
+  comp = prepare_computations((Hit){{0.5, s}}, r);
+  assert_v4(shade_hit(w, comp), vec4(0.90498, 0.90498, 0.90498, 1), "shade hit");
+
+  r.org = vec4(0,0,-5,1);
+  r.dir = vec4(0,1,0,0);
+  w = world();
+  assert_v4(colour_at(w, r), vec4(0,0,0,1), "colour_at");
+  r.dir = vec4(0,0,1,0);
+  assert_v4(colour_at(w, r), vec4(0.38066, 0.47583, 0.2855,1), "colour_at");
+  r.org = vec4(0,0,0.75,1);
+  r.dir = vec4(0,0,-1,0);
+  w.obj[0].material.ambient = 1;
+  w.obj[1].material.ambient = 1;
+  assert_v4(colour_at(w, r), w.obj[1].material.clr, "colour_at");
 
   printf("Tests ran.\n");
 

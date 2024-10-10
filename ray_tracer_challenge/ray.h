@@ -10,6 +10,7 @@
 #define PI 3.14159
 #define I {{1.0,0,0,0},{0,1.0,0,0},{0,0,1.0,0},{0,0,0,1.0}}
 #define MAX_HIT 256
+#define MAX_OBJ 32
 #define PPM_HEADER 127
 
 #pragma GCC diagnostic push
@@ -52,6 +53,11 @@ typedef struct {
   float transform[4][4];
   Material material;
 } Sphere;
+typedef struct {
+  Ray light;
+  float count;
+  Sphere obj[MAX_OBJ];
+} World;
 typedef union {
   struct {
     float t;
@@ -62,6 +68,13 @@ typedef struct {
   int count;
   Hit raw[MAX_HIT];
 } Intersections;
+typedef struct {
+  Vec4 pos;
+  Vec4 eye;
+  Vec4 nrm;
+  Hit hit;
+  bool inside;
+} Computations;
 
 typedef struct {
   size_t w;
@@ -70,6 +83,16 @@ typedef struct {
   Vec4 *pixels;
 } Canvas;
 #pragma GCC diagnostic pop
+
+int sort(const void *elem1, const void *elem2) {
+  float f = *((float*)elem1);
+  float s = *((float*)elem2);
+
+  if (s < f) return  1;
+  if (f < s) return -1;
+  return 0;
+}
+
 static inline void print_v4(const Vec4 v) { printf("( %0.2f, %0.2f, %0.2f, %0.2f )", v.x, v.y, v.z, v.w); }
 Vec4 vec4(const float x, const float y, const float z, const float w) {
   return (Vec4){{ x, y, z, w }};
@@ -318,6 +341,15 @@ Vec4 snrm(const Sphere s, const Vec4 p) {
   return vnrm(w_n);
 }
 
+World world() {
+  Sphere s1 = sphere();
+  s1.material = (Material){ {{0.8,1,0.6,1}}, 0.1, 0.7, 0.2, 200 };
+  Sphere s2 = sphere();
+  scalem4(0.5,0.5,0.5,&s2.transform);
+
+  return (World){ {{vec4(-10,10,-10,1), vec4(1,1,1,1)}}, 2, {s1, s2}};
+}
+
 Vec4 reflect(Vec4 in, Vec4 nrm) {
   return vsub(in, vmul(nrm, vdot(in, nrm) * 2));
 }
@@ -325,16 +357,20 @@ Vec4 lighting(Material m, Ray l, Vec4 p, Vec4 e, Vec4 n) {
   Vec4 clr = colour_mul(m.clr, l.pow);
   Vec4 lightDir = vnrm(vsub(l.pos, p));
 
-  float g_term = vdot(n, lightDir);
-  if (g_term <= 0) return vec4(0,0,0,1);
-
   float a = m.ambient;
-  float d = m.diffuse * g_term;
+  float d = 0;
+  float s = 0;
 
-  // Vec4 h = vnrm(vadd(lightDir, e));
-  // float s = m.specular * powf(vdot(h, n), m.shininess); // Blinn
-  Vec4 r = reflect(vneg(lightDir), n);
-  float s = m.specular * powf(vdot(r, e), m.shininess); // Phong
+  float g_term = vdot(n, lightDir);
+  if (g_term > 0) {
+    d = m.diffuse * g_term;
+
+    Vec4 r = reflect(vneg(lightDir), n);
+    float r_term = vdot(r, e);
+    if (r_term > 0) {
+      s = m.specular * powf(r_term, m.shininess);
+    }
+  }
 
   clr = vmul(clr, a+d+s);
   clr.a = 1;
@@ -367,7 +403,24 @@ Intersections intersect(const Ray r, const Sphere s) {
     return (Intersections){ .count = 2, .raw = {{t1, s}, {t2, s}}};
   }
 }
-Hit hit(Intersections *intersections) {
+Intersections intersect_world(const Ray r, const World w) {
+  Intersections tmp_intersections;
+  Intersections intersections;
+  size_t count = 0;
+  for(uint8_t i = 0; i < w.count; ++i) {
+    tmp_intersections = intersect(r, w.obj[i]);
+    for(uint8_t j = 0; j < tmp_intersections.count; ++j) {
+      if (tmp_intersections.raw[j].t < 0) continue; // NOTE: ignore neg hits
+      intersections.raw[count++] = tmp_intersections.raw[j];
+    }
+  }
+  intersections.count = count;
+  if (count > MAX_HIT) printf("error: max hit limit exceeded"); exit(1);
+  qsort(intersections.raw, intersections.count, sizeof(Hit), sort);
+
+  return intersections;
+}
+Hit hit(Intersections *intersections) { // TODO: not actually used since we sort in <intersect_world>
   Hit tmp;
   tmp.t = FLT_MAX;
   for(size_t i = 0; i < intersections->count; ++i) {
@@ -378,6 +431,28 @@ Hit hit(Intersections *intersections) {
   }
 
   return (Hit){tmp.t, tmp.s};
+}
+Computations prepare_computations(const Hit h,  Ray r) {
+  Vec4 pos = rpos(r, h.t);
+  Vec4 eye = vneg(r.dir);
+  Vec4 nrm = snrm(h.s, pos);
+  bool inside = false;
+
+  if (vdot(nrm, eye) < 0) {
+    inside = true;
+    nrm = vneg(nrm);
+  }
+
+  return (Computations){pos, eye, nrm, h, inside };
+}
+Vec4 shade_hit(World w, Computations c) {
+  return lighting(c.hit.s.material, w.light, c.pos, c.eye, c.nrm);
+}
+Vec4 colour_at(World w, Ray r) {
+  Intersections i = intersect_world(r, w);
+  if (i.count == 0) return vec4(0,0,0,1);
+
+  return shade_hit(w, prepare_computations(i.raw[0], r));
 }
 
 Canvas canvas_init(int w, int h) {
