@@ -441,7 +441,7 @@ int main(int argc, char const *argv[])
   light.pos = vec4(0,0,10,1);
   assert_v4(lighting(s.material, light, pos, eye, nrm), vec4(0.1,0.1,0.1,1), "light behind surface");
 
-  World w = world();
+  World w = default_world();
   assert_v4(w.light.pos, vec4(-10,10,-10,1), "world light");
   assert_v4(w.light.pow, vec4(1,1,1,1), "world light");
   assert_v4(w.obj[0].material.clr, vec4(0.8,1,0.6,1), "world sphere1 material");
@@ -488,7 +488,7 @@ int main(int argc, char const *argv[])
 
   r.org = vec4(0,0,-5,1);
   r.dir = vec4(0,1,0,0);
-  w = world();
+  w = default_world();
   assert_v4(colour_at(w, r), vec4(0,0,0,1), "colour_at");
   r.dir = vec4(0,0,1,0);
   assert_v4(colour_at(w, r), vec4(0.38066, 0.47583, 0.2855,1), "colour_at");
@@ -497,6 +497,49 @@ int main(int argc, char const *argv[])
   w.obj[0].material.ambient = 1;
   w.obj[1].material.ambient = 1;
   assert_v4(colour_at(w, r), w.obj[1].material.clr, "colour_at");
+
+  view_transform(vec4(0,0,0,1), vec4(0,0,-1,1), vec4(0,1,0,0), &trans1);
+  assert_m4(trans1, (float[4][4])I, "default view transform");
+  scalem4(-1,1,-1, &scale1);
+  view_transform(vec4(0,0,0,1), vec4(0,0,1,1), vec4(0,1,0,0), &trans1);
+  assert_m4(trans1, scale1, "pos-z view transform");
+  transm4(0,0,-8, &scale1);
+  view_transform(vec4(0,0,8,1), vec4(0,0,0,1), vec4(0,1,0,0), &trans1);
+  assert_m4(trans1, scale1, "translate view transform");
+  view_transform(vec4(1,3,2,1), vec4(4,-2,8,1), vec4(1,1,0,0), &trans1);
+  float arb_view[4][4] = {{-0.50709,0.50709, 0.67612, -2.36643},{0.76772,0.60609,0.12122,-2.82843},{-0.35857,0.59761,-0.71714,0},{0,0,0,1}};
+  assert_m4(trans1, arb_view, "arbitrary view transform");
+
+  Camera cam = camera(160,120, PI/2);
+  assert_f(cam.hsize, 160, "camera");
+  assert_f(cam.vsize, 120, "camera");
+  assert_f(cam.fov, PI/2, "camera");
+  assert_m4(cam.transform, (float[4][4])I, "cam");
+
+  cam = camera(200,125, PI/2);
+  assert_f(cam.pixel_sz, 0.01, "hoz cam");
+  cam = camera(125,200, PI/2);
+  assert_f(cam.pixel_sz, 0.01, "vert cam");
+
+  cam = camera(201,101,PI/2);
+  r = ray_for_pixel(cam, 100, 50);
+  assert_v4(r.org, vec4(0,0,0,1), "ray through pixel");
+  assert_v4(r.dir, vec4(0,0,-1,0), "ray through pixel");
+  r = ray_for_pixel(cam, 0, 0);
+  assert_v4(r.org, vec4(0,0,0,1), "ray through pixel");
+  assert_v4(r.dir, vec4(0.66519,0.33259,-0.66851,0), "ray through pixel");
+  rotym4(PI/4, &cam.transform);
+  transm4(0,-2,5, &trans1);
+  m4mul(cam.transform, trans1, &cam.transform);
+  r = ray_for_pixel(cam, 100, 50);
+  assert_v4(r.org, vec4(0,2,-5,1), "ray through pixel");
+  assert_v4(r.dir, vec4(sqrtf(2)/2,0,-sqrtf(2)/2,0), "ray through pixel");
+
+  w = default_world();
+  cam = camera(11, 11, PI/2);
+  view_transform(vec4(0,0,-5,1), vec4(0,0,0,1), vec4(0,1,0,0), &cam.transform);
+  c = render(cam, w);
+  assert_v4(pixel_at(&c, 5, 5), vec4(0.38066, 0.47583, 0.2855, 1), "render");
 
   printf("Tests ran.\n");
 

@@ -55,7 +55,7 @@ typedef struct {
 } Sphere;
 typedef struct {
   Ray light;
-  float count;
+  int count;
   Sphere obj[MAX_OBJ];
 } World;
 typedef union {
@@ -75,6 +75,16 @@ typedef struct {
   Hit hit;
   bool inside;
 } Computations;
+
+typedef struct {
+  float hsize;
+  float vsize;
+  float fov;
+  float half_w;
+  float half_h;
+  float pixel_sz;
+  float transform[4][4];
+} Camera;
 
 typedef struct {
   size_t w;
@@ -341,7 +351,7 @@ Vec4 snrm(const Sphere s, const Vec4 p) {
   return vnrm(w_n);
 }
 
-World world() {
+World default_world() {
   Sphere s1 = sphere();
   s1.material = (Material){ {{0.8,1,0.6,1}}, 0.1, 0.7, 0.2, 200 };
   Sphere s2 = sphere();
@@ -415,7 +425,10 @@ Intersections intersect_world(const Ray r, const World w) {
     }
   }
   intersections.count = count;
-  if (count > MAX_HIT) printf("error: max hit limit exceeded"); exit(1);
+  if (count > MAX_HIT) {
+    printf("error: max hit limit exceeded");
+    exit(1);
+  }
   qsort(intersections.raw, intersections.count, sizeof(Hit), sort);
 
   return intersections;
@@ -455,6 +468,67 @@ Vec4 colour_at(World w, Ray r) {
   return shade_hit(w, prepare_computations(i.raw[0], r));
 }
 
+void view_transform(const Vec4 from, const Vec4 to, const Vec4 up, float (*a)[4][4]) {
+  Vec4 forward = vnrm(vsub(to, from));
+  Vec4 left = vcross(forward, vnrm(up));
+  Vec4 true_up = vcross(left, forward);
+
+  forward = vneg(forward);
+
+  (*a)[0][0] = left.x;
+  (*a)[0][1] = left.y;
+  (*a)[0][2] = left.z;
+  (*a)[0][3] = 0;
+
+  (*a)[1][0] = true_up.x;
+  (*a)[1][1] = true_up.y;
+  (*a)[1][2] = true_up.z;
+  (*a)[1][3] = 0;
+
+  (*a)[2][0] = forward.x;
+  (*a)[2][1] = forward.y;
+  (*a)[2][2] = forward.z;
+  (*a)[2][3] = 0;
+
+  (*a)[3][0] = 0;
+  (*a)[3][1] = 0;
+  (*a)[3][2] = 0;
+  (*a)[3][3] = 1;
+
+  float tmp[4][4];
+  transm4(-from.x, -from.y, -from.z, &tmp);
+  m4mul(*a, tmp, a);
+}
+Camera camera(const float w, const float h, const float fov) {
+  float half_v = tan(fov / 2);
+  float aspect = w / h;
+
+  float half_w, half_h;
+  if (1 <= aspect) {
+    half_w = half_v;
+    half_h = half_v / aspect;
+  } else {
+    half_w = half_v * aspect;
+    half_h = half_v;
+  }
+
+  return (Camera){w, h, fov, half_w, half_h, half_w * 2 / w, I};
+}
+Ray ray_for_pixel(Camera c, float px, float py) {
+  float xoff = (px + 0.5) * c.pixel_sz;
+  float yoff = (py + 0.5) * c.pixel_sz;
+
+  float w_x = c.half_w - xoff;
+  float w_y = c.half_h - yoff;
+
+  float tmp[4][4];
+  m4inv(c.transform, &tmp);
+  Vec4 pixel = m4vmul(tmp, vec4(w_x, w_y, -1, 1));
+  Vec4 org = m4vmul(tmp, vec4(0,0,0,1));
+
+  return (Ray){{org, vnrm(vsub(pixel, org))}};
+}
+
 Canvas canvas_init(int w, int h) {
   return (Canvas){ w, h, w*h, calloc(w * h, sizeof(Vec4)) };
 }
@@ -463,6 +537,17 @@ void write_pixel(Canvas *canvas, int x, int y, Vec4 v) {
 }
 Vec4 pixel_at(Canvas *canvas, int x, int y) {
   return canvas->pixels[y*canvas->w+x];
+}
+Canvas render(Camera cam, World w) {
+  Canvas c = canvas_init(cam.hsize, cam.vsize);
+
+  for(size_t j = 0; j < cam.vsize; ++j) {
+    for(size_t i = 0; i < cam.hsize; ++i) {
+      write_pixel(&c, i, j, colour_at(w, ray_for_pixel(cam, i, j)));
+    }
+  }
+
+  return c;
 }
 void canvas_to_ppm(Canvas *canvas) {
   FILE *f = fopen("ray.ppm", "w+");
